@@ -57,8 +57,6 @@ static struct file_system_type sysfs_fs_type = {
 	.kill_sb	= sysfs_kill_sb,
 	.fs_flags	= FS_USERNS_MOUNT,
 };
-
-
 int __init sysfs_init(void)//4文件系统注册挂载
 {
 	int err;
