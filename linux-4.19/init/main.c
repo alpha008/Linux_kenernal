@@ -405,7 +405,7 @@ static noinline void __ref rest_init(void)
 	 * the init task will end up wanting to create kthreads, which, if
 	 * we schedule it before we create kthreadd, will OOPS.
 	 */
-	pid = kernel_thread(kernel_init, NULL, CLONE_FS);
+	pid = kernel_thread(kernel_init, NULL, CLONE_FS);//2.
 	/*
 	 * Pin init on the boot CPU. Task migration is not properly working
 	 * until sched_init_smp() has been run. It will set the allowed
@@ -736,7 +736,7 @@ asmlinkage __visible void __init start_kernel(void)
 	}
 
 	/* Do the rest non-__init'ed, we're now alive */
-	rest_init();
+	rest_init();//1.构造sysfs初步的树型结构
 }
 
 /* Call all constructor functions linked into the kernel. */
@@ -972,7 +972,7 @@ static void __init do_basic_setup(void)
 {
 	cpuset_init_smp();
 	shmem_init();
-	driver_init();
+	driver_init();//5.
 	init_irq_proc();
 	do_ctors();
 	usermodehelper_enable();
@@ -1059,15 +1059,13 @@ static inline void mark_readonly(void)
 static int __ref kernel_init(void *unused)
 {
 	int ret;
-
-	kernel_init_freeable();
+	kernel_init_freeable();//3.
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
 	ftrace_free_init_mem();
 	jump_label_invalidate_initmem();
 	free_initmem();
 	mark_readonly();
-
 	/*
 	 * Kernel mappings are now finalized - update the userspace page-table
 	 * to finalize PTI.
@@ -1141,7 +1139,7 @@ static noinline void __init kernel_init_freeable(void)
 
 	page_alloc_init_late();
 
-	do_basic_setup();
+	do_basic_setup();//4.
 
 	/* Open the /dev/console on the rootfs, this should never fail */
 	if (ksys_open((const char __user *) "/dev/console", O_RDWR, 0) < 0)

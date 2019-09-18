@@ -1167,7 +1167,11 @@ int __init platform_bus_init(void)
 
 	early_platform_cleanup();
 
-	error = device_register(&platform_bus);
+	error = device_register(&platform_bus);   
+                                             //在/sys/devices/目录下创建platform子目录
+                                             //在/sys/devices/platform/目录下创建uevent文件
+                                             //在/sys/devices/platform/创建power子目录
+                                             //在/sys/devices/platform/创建control、wakeup子目录
 	if (error) {
 		put_device(&platform_bus);
 		return error;
