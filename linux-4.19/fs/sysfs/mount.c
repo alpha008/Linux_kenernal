@@ -58,12 +58,11 @@ static struct file_system_type sysfs_fs_type = {
 	.fs_flags	= FS_USERNS_MOUNT,
 };
 
-int __init sysfs_init(void)
+int __init sysfs_init(void)//4文件系统注册挂载
 {
 	int err;
 
-	sysfs_root = kernfs_create_root(NULL, KERNFS_ROOT_EXTRA_OPEN_PERM_CHECK,
-					NULL);
+	sysfs_root = kernfs_create_root(NULL, KERNFS_ROOT_EXTRA_OPEN_PERM_CHECK,NULL);
 	if (IS_ERR(sysfs_root))
 		return PTR_ERR(sysfs_root);
 
