@@ -714,7 +714,7 @@ asmlinkage __visible void __init start_kernel(void)
 	key_init();
 	security_init();
 	dbg_late_init();
-	vfs_caches_init();
+	vfs_caches_init();//1.文件系统注册挂载
 	pagecache_init();
 	signals_init();
 	seq_file_init();

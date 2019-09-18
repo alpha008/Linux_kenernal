@@ -3133,7 +3133,7 @@ void __init vfs_caches_init(void)
 	inode_init();
 	files_init();
 	files_maxfiles_init();
-	mnt_init();
+	mnt_init();//2.文件系统注册挂载
 	bdev_cache_init();
 	chrdev_init();
 }
