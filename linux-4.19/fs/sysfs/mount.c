@@ -58,7 +58,7 @@ static struct file_system_type sysfs_fs_type = {
 	.fs_flags	= FS_USERNS_MOUNT,
 };
 
-int __init sysfs_init(void)/*4.文件系统注册挂载*/
+int __init sysfs_init(void)/*4.鏂囦欢绯荤粺娉ㄥ唽鎸傝浇*/
 {
 	int err;
 

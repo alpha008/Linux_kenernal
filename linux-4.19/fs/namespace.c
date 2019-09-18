@@ -3218,7 +3218,7 @@ void __init mnt_init(void)
 
 	kernfs_init();
 
-	err = sysfs_init();//3.文件系统注册挂载
+	err = sysfs_init();//3.鏂囦欢绯荤粺娉ㄥ唽鎸傝浇
 	if (err)
 		printk(KERN_WARNING "%s: sysfs_init error: %d\n",__func__, err);
 	fs_kobj = kobject_create_and_add("fs", NULL);
