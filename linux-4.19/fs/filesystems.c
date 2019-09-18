@@ -85,8 +85,20 @@ int register_filesystem(struct file_system_type * fs)
 	write_unlock(&file_systems_lock);
 	return res;
 }
+/*
+1、EXPORT_SYMBOL的作用
+EXPORT_SYMBOL标签内定义的函数或者符号对全部内核代码公开，不用修改内核代码就可以在您的内核模块中直接调用，即使用EXPORT_SYMBOL可以将一个函数以符号的方式导出给其他模块使用。
+这里要和System.map做一下对比：
+System.map 中的是连接时的函数地址。连接完成以后，在2.6内核运行过程中，是不知道哪个符号在哪个地址的。
+EXPORT_SYMBOL 的符号， 是把这些符号和对应的地址保存起来，在内核运行的过程中，可以找到这些符号对应的地址。
+而模块在加载过程中，其本质就是能动态连接到内核，如果在模块中引用了内核或其它模块的符号，就要EXPORT_SYMBOL这些符号，这样才能找到对应的地址连接。
+使用方法：
+   第一、在模块函数定义之后使用EXPORT_SYMBOL（函数名）
+   第二、在掉用该函数的模块中使用extern对之声明
+   第三、首先加载定义该函数的模块，再加载调用该函数的模块
 
-EXPORT_SYMBOL(register_filesystem);
+*/
+EXPORT_SYMBOL(register_filesystem);//凡是使用此标志，代表其它模块也要使用
 
 /**
  *	unregister_filesystem - unregister a file system
