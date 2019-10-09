@@ -101,7 +101,20 @@ static int adf_get_vf_real_id(u32 fake)
 	}
 	return -1;
 }
+#if 0
+    struct vf_id_map *map;
+	struct list_head *ptr;
 
+	map = list_entry(ptr, struct vf_id_map, list);
+    
+#define list_entry(ptr, type, member) \
+        container_of(ptr, type, member)
+
+#define container_of(ptr, type, member) \
+    (type *)((char *)(ptr) - (char *) &((type *)0)->member)
+
+(type *)((char *)(ptr) - (char *) &((type *)0)->member)
+#endif
 /**
  * adf_clean_vf_map() - Cleans VF id mapings
  *

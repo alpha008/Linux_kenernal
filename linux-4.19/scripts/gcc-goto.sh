@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-2.0
 # Test for gcc 'asm goto' support
 # Copyright (C) 2010, Jason Baron <jbaron@redhat.com>
-
 cat << "END" | $@ -x c - -c -o /dev/null >/dev/null 2>&1 && echo "y"
 int main(void)
 {

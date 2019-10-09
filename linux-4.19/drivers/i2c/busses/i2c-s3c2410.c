@@ -399,7 +399,7 @@ static int i2c_s3c_irq_nextbyte(struct s3c24xx_i2c *i2c, unsigned long iicstat)
 	unsigned long tmp;
 	unsigned char byte;
 	int ret = 0;
-
+//iic模块
 	switch (i2c->state) {
 
 	case STATE_IDLE:

@@ -908,7 +908,7 @@ struct file {
 	void			*f_security;
 #endif
 	/* needed for tty driver, and maybe others */
-	void			*private_data;
+	void			*private_data;//这里从struct inode里面获取到的次设备号，放到file指针的这个地方
 
 #ifdef CONFIG_EPOLL
 	/* Used by fs/eventpoll.c to link all the hooks to this file */

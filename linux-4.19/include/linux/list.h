@@ -92,7 +92,7 @@ static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
 	__list_add(new, head->prev, head);
 }
-
+//利用结构体的指针域来进行构造
 /*
  * Delete a list entry by making the prev/next entries
  * point to each other.
@@ -454,7 +454,7 @@ static inline void list_splice_tail_init(struct list_head *list,
  */
 #define list_for_each(pos, head) \
 	for (pos = (head)->next; pos != (head); pos = pos->next)
-
+//使用中间变量，从头开始遍历，双向循环链表，一直循环到不等于头结点为止
 /**
  * list_for_each_prev	-	iterate over a list backwards
  * @pos:	the &struct list_head to use as a loop cursor.
