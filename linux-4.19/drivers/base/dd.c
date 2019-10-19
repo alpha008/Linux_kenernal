@@ -449,7 +449,9 @@ static int really_probe(struct device *dev, struct device_driver *drv)
 	int local_trigger_count = atomic_read(&deferred_trigger_count);
 	bool test_remove = IS_ENABLED(CONFIG_DEBUG_TEST_DRIVER_REMOVE) &&
 			   !drv->suppress_bind_attrs;
-
+/* make sure driver won't have bind/unbind attributes
+   drv->driver.suppress_bind_attrs = true; //666
+*/
 	if (defer_all_probes) {
 		/*
 		 * Value of defer_all_probes can be set only by
@@ -496,11 +498,11 @@ re_probe:
 			goto probe_failed;
 	}
 
-	if (dev->bus->probe) {
+	if (dev->bus->probe) {//1.先调用总线的驱动函数
 		ret = dev->bus->probe(dev);//66
 		if (ret)
 			goto probe_failed;
-	} else if (drv->probe) {
+	} else if (drv->probe) {//2.在调用驱动的函数
 		ret = drv->probe(dev);//66
 		if (ret)
 			goto probe_failed;
@@ -522,7 +524,7 @@ re_probe:
 			dev->pm_domain->dismiss(dev);
 		pm_runtime_reinit(dev);
 
-		goto re_probe;
+		goto re_probe;//当test_remove为真时才会重新执行
 	}
 
 	pinctrl_init_done(dev);
