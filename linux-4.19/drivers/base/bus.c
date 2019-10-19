@@ -635,65 +635,33 @@ int bus_add_driver(struct device_driver *drv)
 {
 	struct bus_type *bus;
 	struct driver_private *priv;
-	int error = 0;
-
 	bus = bus_get(drv->bus);
-	if (!bus)
-		return -EINVAL;
-
-	pr_debug("bus: '%s': add driver %s\n", bus->name, drv->name);
-
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
-		error = -ENOMEM;
-		goto out_put_bus;
-	}
 	klist_init(&priv->klist_devices, NULL, NULL);
 	priv->driver = drv;
 	drv->p = priv;
+    /*1.在sys/bus/xxx/drivers 目录下创建目录*/
 	priv->kobj.kset = bus->p->drivers_kset;
-	error = kobject_init_and_add(&priv->kobj, &driver_ktype, NULL,
-				     "%s", drv->name);
-	if (error)
-		goto out_unregister;
-
+	error = kobject_init_and_add(&priv->kobj, &driver_ktype, NULL,"%s", drv->name);
+    //2.将driver 加入 Bus->p->kist_drivers链表
 	klist_add_tail(&priv->knode_bus, &bus->p->klist_drivers);
-	if (drv->bus->p->drivers_autoprobe) {
+    /*3. 匹配 dev*/
+    if (drv->bus->p->drivers_autoprobe) {
 		if (driver_allows_async_probing(drv)) {
-			pr_debug("bus: '%s': probing driver %s asynchronously\n",
-				drv->bus->name, drv->name);
 			async_schedule(driver_attach_async, drv);
 		} else {
 			error = driver_attach(drv);
-			if (error)
-				goto out_unregister;
 		}
 	}
+    /*4. 如果设置了drv->mod_name 根据名字寻找模块*/
 	module_add_driver(drv->owner, drv);
-
+    /*5. 在/sys/bus/xxx/drivers/创建属性文件*/
 	error = driver_create_file(drv, &driver_attr_uevent);
-	if (error) {
-		printk(KERN_ERR "%s: uevent attr (%s) failed\n",
-			__func__, drv->name);
-	}
 	error = driver_add_groups(drv, bus->drv_groups);
-	if (error) {
-		/* How the hell do we get out of this pickle? Give up */
-		printk(KERN_ERR "%s: driver_create_groups(%s) failed\n",
-			__func__, drv->name);
-	}
-
 	if (!drv->suppress_bind_attrs) {
 		error = add_bind_files(drv);
-		if (error) {
-			/* Ditto */
-			printk(KERN_ERR "%s: add_bind_files(%s) failed\n",
-				__func__, drv->name);
-		}
 	}
-
 	return 0;
-
 out_unregister:
 	kobject_put(&priv->kobj);
 	/* drv->p is freed in driver_release()  */
@@ -846,62 +814,38 @@ int bus_register(struct bus_type *bus)
 	int retval;
 	struct subsys_private *priv;
 	struct lock_class_key *key = &bus->lock_key;
-
 	priv = kzalloc(sizeof(struct subsys_private), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
-
-	priv->bus = bus;
+	priv->bus = bus;    
 	bus->p = priv;
-
+    /* 1. bus 与 prv 相互建立联系  私有数据 .bus ->  bus 本身*/  
 	BLOCKING_INIT_NOTIFIER_HEAD(&priv->bus_notifier);
-
-	retval = kobject_set_name(&priv->subsys.kobj, "%s", bus->name);
-	if (retval)
-		goto out;
-
+    /* 2. 设置 bus->prv->subsys->kobj 设置 priv->subsys.kobj.name = bus->name  对应于/sys/ 目录下的目录名*/
+	retval = kobject_set_name(&priv->subsys.kobj, "%s", bus->name);   
+    /* 3. 所有的 priv->subsys.kobj.kset 指向 bus_kset 对应于图中④与六的关系*/
 	priv->subsys.kobj.kset = bus_kset;
+    /* 4. 所有的priv->subsys.kobj.ktype 等于 bus_ktype */
 	priv->subsys.kobj.ktype = &bus_ktype;
 	priv->drivers_autoprobe = 1;
-
+    /* 5.注册 kset (bus->prv->subsys priv->devices_kset priv->drivers_kset)
+     注册 priv->subsys ，由于 priv->subsys.kobj.kset = bus_kset，所以会在 /sys/bus/目录下创建 目录 如/sys/*/
 	retval = kset_register(&priv->subsys);
-	if (retval)
-		goto out;
-
+	/* 6.sysfs_create_file(&bus->p->subsys.kobj, &bus_attr_uevent->attr);*/
 	retval = bus_create_file(bus, &bus_attr_uevent);
-	if (retval)
-		goto bus_uevent_fail;
-
-	priv->devices_kset = kset_create_and_add("devices", NULL,
-						 &priv->subsys.kobj);
-	if (!priv->devices_kset) {
-		retval = -ENOMEM;
-		goto bus_devices_fail;
-	}
-
-	priv->drivers_kset = kset_create_and_add("drivers", NULL,
-						 &priv->subsys.kobj);
-	if (!priv->drivers_kset) {
-		retval = -ENOMEM;
-		goto bus_drivers_fail;
-	}
-
+    /* 7.priv->subsys.kobj.kset = bus_kset ，因此会创建 /sys/bus/XXX/devices 
+    目录 如 /sys/bus/plateform/devices*/
+	priv->devices_kset = kset_create_and_add("devices", NULL, &priv->subsys.kobj);
+    /* 8.同理 创建 /sys/bus/XXX/devices 目录 如 /sys/bus/plateform/drivers*/
+	priv->drivers_kset = kset_create_and_add("drivers", NULL, &priv->subsys.kobj);
+	/* 9.初始化 klist_devices 并设置get put 函数  初始化 klist_drivers 不知为何没有get put */
 	INIT_LIST_HEAD(&priv->interfaces);
 	__mutex_init(&priv->mutex, "subsys mutex", key);
 	klist_init(&priv->klist_devices, klist_devices_get, klist_devices_put);
 	klist_init(&priv->klist_drivers, NULL, NULL);
-
+    /* 10.static inline int add_probe_files(struct bus_type *bus) { return 0; }*/
 	retval = add_probe_files(bus);
-	if (retval)
-		goto bus_probe_files_fail;
-
+	/* 11.添加 bus->attrs 属性文件*/
 	retval = bus_add_groups(bus, bus->bus_groups);
-	if (retval)
-		goto bus_groups_fail;
-
-	pr_debug("bus: '%s': registered\n", bus->name);
 	return 0;
-
 bus_groups_fail:
 	remove_probe_files(bus);
 bus_probe_files_fail:
@@ -1239,3 +1183,6 @@ int __init buses_init(void)
 
 	return 0;
 }
+
+
+

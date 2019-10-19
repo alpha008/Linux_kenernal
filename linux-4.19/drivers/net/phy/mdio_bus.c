@@ -722,6 +722,8 @@ struct bus_type mdio_bus_type = {
 	.match		= mdio_bus_match,
 	.uevent		= mdio_uevent,
 };
+
+
 EXPORT_SYMBOL(mdio_bus_type);
 
 int __init mdio_bus_init(void)

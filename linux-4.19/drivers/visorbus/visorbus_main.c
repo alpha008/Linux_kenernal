@@ -982,7 +982,7 @@ int visorbus_register_visor_driver(struct visor_driver *drv)
 	drv->driver.probe = visordriver_probe_device;
 	drv->driver.remove = visordriver_remove_device;
 	drv->driver.owner = drv->owner;
-	/*
+	/*6666
 	 * driver_register does this:
 	 *   bus_add_driver(drv)
 	 *   ->if (drv.bus)  ** (bus_type) **

@@ -51,6 +51,8 @@ struct driver_private {
 	struct module_kobject *mkobj;
 	struct device_driver *driver;
 };
+
+
 #define to_driver(obj) container_of(obj, struct driver_private, kobj)
 
 /**
@@ -77,6 +79,7 @@ struct device_private {
 	struct list_head deferred_probe;
 	struct device *device;
 };
+
 #define to_device_private_parent(obj)	\
 	container_of(obj, struct device_private, knode_parent)
 #define to_device_private_driver(obj)	\
@@ -113,8 +116,7 @@ extern void device_release_driver_internal(struct device *dev,
 extern void driver_detach(struct device_driver *drv);
 extern int driver_probe_device(struct device_driver *drv, struct device *dev);
 extern void driver_deferred_probe_del(struct device *dev);
-static inline int driver_match_device(struct device_driver *drv,
-				      struct device *dev)
+static inline int driver_match_device(struct device_driver *drv, struct device *dev)
 {
 	return drv->bus->match ? drv->bus->match(dev, drv) : 1;
 }

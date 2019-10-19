@@ -497,11 +497,11 @@ re_probe:
 	}
 
 	if (dev->bus->probe) {
-		ret = dev->bus->probe(dev);
+		ret = dev->bus->probe(dev);//66
 		if (ret)
 			goto probe_failed;
 	} else if (drv->probe) {
-		ret = drv->probe(dev);
+		ret = drv->probe(dev);//66
 		if (ret)
 			goto probe_failed;
 	}
@@ -530,7 +530,7 @@ re_probe:
 	if (dev->pm_domain && dev->pm_domain->sync)
 		dev->pm_domain->sync(dev);
 
-	driver_bound(dev);
+	driver_bound(dev);//66
 	ret = 1;
 	pr_debug("bus: '%s': %s: bound device %s to driver %s\n",
 		 drv->bus->name, __func__, dev_name(dev), drv->name);
@@ -659,7 +659,7 @@ int driver_probe_device(struct device_driver *drv, struct device *dev)
 	if (initcall_debug)
 		ret = really_probe_debug(dev, drv);
 	else
-		ret = really_probe(dev, drv);
+		ret = really_probe(dev, drv);//66
 	pm_request_idle(dev);
 
 	if (dev->parent)
@@ -892,7 +892,7 @@ static int __driver_attach(struct device *dev, void *data)
 	if (dev->parent && dev->bus->need_parent_lock)
 		device_lock(dev->parent);
 	device_lock(dev);
-	if (!dev->driver)
+	if (!dev->driver)//666
 		driver_probe_device(drv, dev);
 	device_unlock(dev);
 	if (dev->parent && dev->bus->need_parent_lock)

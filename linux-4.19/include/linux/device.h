@@ -118,6 +118,8 @@ struct bus_type {
 	const struct attribute_group **bus_groups;
 	const struct attribute_group **dev_groups;
 	const struct attribute_group **drv_groups;
+	struct subsys_private *p;
+	const struct dev_pm_ops *pm;
 
 	int (*match)(struct device *dev, struct device_driver *drv);
 	int (*uevent)(struct device *dev, struct kobj_uevent_env *env);
@@ -132,14 +134,9 @@ struct bus_type {
 	int (*resume)(struct device *dev);
 
 	int (*num_vf)(struct device *dev);
-
 	int (*dma_configure)(struct device *dev);
 
-	const struct dev_pm_ops *pm;
-
 	const struct iommu_ops *iommu_ops;
-
-	struct subsys_private *p;
 	struct lock_class_key lock_key;
 
 	bool need_parent_lock;
@@ -277,6 +274,7 @@ enum probe_type {
 struct device_driver {
 	const char		*name;
 	struct bus_type		*bus;
+	struct driver_private *p;
 
 	struct module		*owner;
 	const char		*mod_name;	/* used for built-in modules */
@@ -296,8 +294,6 @@ struct device_driver {
 
 	const struct dev_pm_ops *pm;
 	void (*coredump) (struct device *dev);
-
-	struct driver_private *p;
 };
 
 
@@ -938,24 +934,18 @@ struct dev_links_info {
  */
 struct device {
 	struct device		*parent;
-
 	struct device_private	*p;
+	struct bus_type	*bus;		/* type of bus device is on */
+	struct device_driver *driver;	/* which driver has allocated this  device */
 
 	struct kobject kobj;
 	const char		*init_name; /* initial name of the device */
 	const struct device_type *type;
 
-	struct mutex		mutex;	/* mutex to synchronize calls to
-					 * its driver.
-					 */
-
-	struct bus_type	*bus;		/* type of bus device is on */
-	struct device_driver *driver;	/* which driver has allocated this
-					   device */
+	struct mutex		mutex;	/* mutex to synchronize calls to its driver.*/				  
 	void		*platform_data;	/* Platform specific data, device
 					   core doesn't touch it */
-	void		*driver_data;	/* Driver data, set and get with
-					   dev_set/get_drvdata */
+	void		*driver_data;	/* Driver data, set and get with dev_set/get_drvdata */
 	struct dev_links_info	links;
 	struct dev_pm_info	power;
 	struct dev_pm_domain	*pm_domain;
