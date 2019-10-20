@@ -708,7 +708,7 @@ net_rx(struct net_device *dev)
 /* The typical workload of the driver:
  * Handle the network interface interrupts.
  */
-
+//此处中断接收报文
 static irqreturn_t net_interrupt(int irq, void *dev_id)
 {
 	struct net_device *dev = dev_id;
@@ -730,11 +730,11 @@ static irqreturn_t net_interrupt(int irq, void *dev_id)
 		cs89_dbg(4, debug, "%s: event=%04x\n", dev->name, status);
 		handled = 1;
 		switch (status & ISQ_EVENT_MASK) {
-		case ISQ_RECEIVER_EVENT:
+		case ISQ_RECEIVER_EVENT: //接收报文
 			/* Got a packet(s). */
 			net_rx(dev);
 			break;
-		case ISQ_TRANSMITTER_EVENT:
+		case ISQ_TRANSMITTER_EVENT://发送报文
 			dev->stats.tx_packets++;
 			netif_wake_queue(dev);	/* Inform upper layers. */
 			if ((status & (TX_OK |
