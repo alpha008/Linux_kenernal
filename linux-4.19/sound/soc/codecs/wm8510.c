@@ -685,13 +685,19 @@ static struct i2c_driver wm8510_i2c_driver = {
 	.probe =    wm8510_i2c_probe,
 	.id_table = wm8510_i2c_id,
 };
+/*i2c继承device_driver
+内部包含：
+driver：.name = "wm8510",
+		.of_match_table = wm8510_of_match,
+id_table：内部嵌套该iic的信息
+*/
 #endif
 
 static int __init wm8510_modinit(void)
 {
 	int ret = 0;
 #if IS_ENABLED(CONFIG_I2C)
-	ret = i2c_add_driver(&wm8510_i2c_driver);
+	ret = i2c_add_driver(&wm8510_i2c_driver);//在注册该驱动时，iic_name iic.id_table
 	if (ret != 0) {
 		printk(KERN_ERR "Failed to register WM8510 I2C driver: %d\n",
 		       ret);

@@ -266,6 +266,8 @@ enum i2c_alert_protocol {
  */
 struct i2c_driver {
 	unsigned int class;
+	struct device_driver driver;
+	const struct i2c_device_id *id_table;
 
 	/* Standard driver model interfaces */
 	int (*probe)(struct i2c_client *, const struct i2c_device_id *);
@@ -294,8 +296,7 @@ struct i2c_driver {
 	 */
 	int (*command)(struct i2c_client *client, unsigned int cmd, void *arg);
 
-	struct device_driver driver;
-	const struct i2c_device_id *id_table;
+
 
 	/* Device detection callback for automatic device creation */
 	int (*detect)(struct i2c_client *, struct i2c_board_info *);

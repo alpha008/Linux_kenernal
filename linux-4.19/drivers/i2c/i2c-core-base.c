@@ -89,7 +89,7 @@ const struct i2c_device_id *i2c_match_id(const struct i2c_device_id *id,
 	if (!(id && client))
 		return NULL;
 
-	while (id->name[0]) {
+	while (id->name[0]) {//4.id_table中的名字跟设备里的名字匹配
 		if (strcmp(client->name, id->name) == 0)
 			return id;
 		id++;
@@ -114,7 +114,7 @@ static int i2c_device_match(struct device *dev, struct device_driver *drv)
 
 	driver = to_i2c_driver(drv);
 
-	/* Finally an I2C match */
+	/* Finally an I2C match */    //3.匹配策略
 	if (i2c_match_id(driver->id_table, client))
 		return 1;
 
@@ -489,7 +489,7 @@ ATTRIBUTE_GROUPS(i2c_dev);
 
 struct bus_type i2c_bus_type = {
 	.name		= "i2c",
-	.match		= i2c_device_match,
+	.match		= i2c_device_match,//2.匹配策略
 	.probe		= i2c_device_probe,
 	.remove		= i2c_device_remove,
 	.shutdown	= i2c_device_shutdown,
@@ -1591,7 +1591,7 @@ static int __process_new_driver(struct device *dev, void *data)
 	if (dev->type != &i2c_adapter_type)
 		return 0;
 	return i2c_do_add_adapter(data, to_i2c_adapter(dev));
-}
+}//7.添加适配器
 
 /*
  * An i2c_driver is used with one or more i2c_client (device) nodes to access
@@ -1608,7 +1608,7 @@ int i2c_register_driver(struct module *owner, struct i2c_driver *driver)
 
 	/* add the driver to the list of i2c drivers in the driver core */
 	driver->driver.owner = owner;
-	driver->driver.bus = &i2c_bus_type;
+	driver->driver.bus = &i2c_bus_type;//6.写明自己属于哪种总线
 	INIT_LIST_HEAD(&driver->clients);
 
 	/* When registration returns, the driver core
@@ -1723,7 +1723,7 @@ static int __init i2c_init(void)
 		__i2c_first_dynamic_bus_num = retval + 1;
 	up_write(&__i2c_board_lock);
 
-	retval = bus_register(&i2c_bus_type);
+	retval = bus_register(&i2c_bus_type);//1.注册i2c总线
 	if (retval)
 		return retval;
 
