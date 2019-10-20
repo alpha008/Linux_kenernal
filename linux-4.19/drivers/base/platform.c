@@ -978,7 +978,7 @@ static int platform_match(struct device *dev, struct device_driver *drv)
 		return 1;
 
 	/* Then try to match against the id table */
-	if (pdrv->id_table)
+	if (pdrv->id_table)//第三种通过id_table来实现
 		return platform_match_id(pdrv->id_table, pdev) != NULL;
 
 	/* fall-back to driver name match */

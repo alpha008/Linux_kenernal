@@ -634,7 +634,7 @@ static int i2cdev_attach_adapter(struct device *dev, void *dummy)
 	struct i2c_adapter *adap;
 	struct i2c_dev *i2c_dev;
 	int res;
-
+    //判断是否为适配器，如果不是那么直接返回
 	if (dev->type != &i2c_adapter_type)
 		return 0;
 	adap = to_i2c_adapter(dev);
@@ -642,14 +642,15 @@ static int i2cdev_attach_adapter(struct device *dev, void *dummy)
 	i2c_dev = get_free_i2c_dev(adap);
 	if (IS_ERR(i2c_dev))
 		return PTR_ERR(i2c_dev);
-
+    //注册主设备号，注册硬件操作方法
 	cdev_init(&i2c_dev->cdev, &i2cdev_fops);
 	i2c_dev->cdev.owner = THIS_MODULE;
 	res = cdev_add(&i2c_dev->cdev, MKDEV(I2C_MAJOR, adap->nr), 1);
 	if (res)
 		goto error_cdev;
 
-	/* register this i2c device with the driver core */
+	/* register this i2c device with the driver core 
+    创建一个设备类的文件*/
 	i2c_dev->dev = device_create(i2c_dev_class, &adap->dev,
 				     MKDEV(I2C_MAJOR, adap->nr), NULL,
 				     "i2c-%d", adap->nr);
@@ -736,7 +737,8 @@ static int __init i2c_dev_init(void)
 	if (res)
 		goto out_unreg_class;
 
-	/* Bind to already existing adapters right away */
+	/* 绑定设备与哪个控制器控制搜索IIC总线的设备链表，每搜多到一个都会进行一个绑定
+	Bind to already existing adapters right away */
 	i2c_for_each_dev(NULL, i2cdev_attach_adapter);
 
 	return 0;

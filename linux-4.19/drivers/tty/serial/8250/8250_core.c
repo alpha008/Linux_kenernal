@@ -798,7 +798,7 @@ EXPORT_SYMBOL(serial8250_resume_port);
  * all entries to have at least UPF_BOOT_AUTOCONF set.
  */
 static int serial8250_probe(struct platform_device *dev)
-{
+{//将平台设备获取到的信息，存放到本地来复制一份
 	struct plat_serial8250_port *p = dev_get_platdata(&dev->dev);
 	struct uart_8250_port uart;
 	int ret, i, irqflag = 0;

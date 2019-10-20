@@ -17,7 +17,7 @@
 	.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,		\
 	.regshift	= 0,						\
 }
-
+//平台资源--自建平台数据
 static struct plat_serial8250_port uart8250_data[] = {
 	PORT(0x3F8, 4),
 	PORT(0x2F8, 3),
@@ -25,7 +25,7 @@ static struct plat_serial8250_port uart8250_data[] = {
 	PORT(0x2E8, 3),
 	{ },
 };
-
+//平台设备---内嵌dev---内嵌空指针存放设备资源
 static struct platform_device uart8250_device = {
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_PLATFORM,
@@ -33,7 +33,7 @@ static struct platform_device uart8250_device = {
 		.platform_data	= uart8250_data,
 	},
 };
-
+//平台设备注册
 static int __init uart8250_init(void)
 {
 	return platform_device_register(&uart8250_device);
