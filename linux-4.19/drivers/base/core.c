@@ -1459,7 +1459,6 @@ static void klist_children_put(struct klist_node *n)
 /**
  * device_initialize - init device structure.
  * @dev: device.
- *
  * This prepares the device for use by other layers by initializing
  * its fields.
  * It is the first half of device_register(), if called by
@@ -1467,7 +1466,6 @@ static void klist_children_put(struct klist_node *n)
  * may use @dev's fields. In particular, get_device()/put_device()
  * may be used for reference counting of @dev after calling this
  * function.
- *
  * All fields in @dev must be initialized by the caller to 0, except
  * for those explicitly set to some other value.  The simplest
  * approach is to use kzalloc() to allocate the structure containing
@@ -1826,38 +1824,31 @@ int device_add(struct device *dev)
 	struct class_interface *class_intf;
 	int error = -EINVAL;
 	struct kobject *glue_dir = NULL;
-
 	dev = get_device(dev);
 	if (!dev)
 		goto done;
-
 	if (!dev->p) {
 		error = device_private_init(dev);
 		if (error)
 			goto done;
 	}
-
-	/*
-	 * for statically allocated devices, which should all be converted
+	 /* for statically allocated devices, which should all be converted
 	 * some day, we need to initialize the name. We prevent reading back
-	 * the name, and force the use of dev_name()
-	 */
+	 * the name, and force the use of dev_name()*/
+	 /*1.如果设置了 init_name 将 init_name 设置为dev->kobj->name*/
 	if (dev->init_name) {
 		dev_set_name(dev, "%s", dev->init_name);
 		dev->init_name = NULL;
 	}
-
 	/* subsystems can specify simple device enumeration */
 	if (!dev_name(dev) && dev->bus && dev->bus->dev_name)
-		dev_set_name(dev, "%s%u", dev->bus->dev_name, dev->id);
-
+        dev_set_name(dev, "%s%u", dev->bus->dev_name, dev->id);
 	if (!dev_name(dev)) {
 		error = -EINVAL;
 		goto name_error;
 	}
-
 	pr_debug("device: '%s': %s\n", dev_name(dev), __func__);
-
+    /*2. 将 parent_device.kobj 设置为dev->kobj->parent */
 	parent = get_device(dev->parent);
 	kobj = get_device_parent(dev, parent);
 	if (IS_ERR(kobj)) {
@@ -1866,30 +1857,29 @@ int device_add(struct device *dev)
 	}
 	if (kobj)
 		dev->kobj.parent = kobj;
-
-	/* use parent numa_node */
+	/*3.  use parent numa_node */
 	if (parent && (dev_to_node(dev) == NUMA_NO_NODE))
 		set_dev_node(dev, dev_to_node(parent));
-
 	/* first, register with generic layer. */
 	/* we require the name to be set before, and pass NULL */
+    /*4.use parent numa_node */
 	error = kobject_add(&dev->kobj, dev->kobj.parent, NULL);
 	if (error) {
 		glue_dir = get_glue_dir(dev);
 		goto Error;
 	}
-
-	/* notify platform of device entry */
+	/*5. notify platform of device entry  */
 	if (platform_notify)
 		platform_notify(dev);
-
+    /*6.创建属性文件*/
 	error = device_create_file(dev, &dev_attr_uevent);
 	if (error)
 		goto attrError;
-
+    // 从 dev->class->p->class_subsys.kobj 目录下创建到 /sys/devices/xxxx/subsystem 的软连接
 	error = device_add_class_symlinks(dev);
 	if (error)
 		goto SymlinkError;
+	// 设置属性文件
 	error = device_add_attrs(dev);
 	if (error)
 		goto AttrsError;
@@ -1900,38 +1890,29 @@ int device_add(struct device *dev)
 	if (error)
 		goto DPMError;
 	device_pm_add(dev);
-
+    /*7. 如果有主次设备号 创建dev 属性文件*/
 	if (MAJOR(dev->devt)) {
 		error = device_create_file(dev, &dev_attr_dev);
 		if (error)
 			goto DevAttrError;
-
 		error = device_create_sys_dev_entry(dev);
 		if (error)
 			goto SysEntryError;
-
 		devtmpfs_create_node(dev);
 	}
-
 	/* Notify clients of device addition.  This call must come
 	 * after dpm_sysfs_add() and before kobject_uevent().
 	 */
 	if (dev->bus)
-		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
-					     BUS_NOTIFY_ADD_DEVICE, dev);
-
+		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,BUS_NOTIFY_ADD_DEVICE, dev);
 	kobject_uevent(&dev->kobj, KOBJ_ADD);
-	bus_probe_device(dev);
+	bus_probe_device(dev);     /*8.device_attach(dev); 匹配drv*/ 
 	if (parent)
-		klist_add_tail(&dev->p->knode_parent,
-			       &parent->p->klist_children);
-
+		klist_add_tail(&dev->p->knode_parent,&parent->p->klist_children);
 	if (dev->class) {
 		mutex_lock(&dev->class->p->mutex);
 		/* tie the class to the device */
-		klist_add_tail(&dev->knode_class,
-			       &dev->class->p->klist_devices);
-
+		klist_add_tail(&dev->knode_class,&dev->class->p->klist_devices);
 		/* notify any interfaces that the device is here */
 		list_for_each_entry(class_intf,
 				    &dev->class->p->interfaces, node)
