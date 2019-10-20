@@ -13,10 +13,10 @@ bool vlan_do_receive(struct sk_buff **skbp)
 	u16 vlan_id = skb_vlan_tag_get_id(skb);
 	struct net_device *vlan_dev;
 	struct vlan_pcpu_stats *rx_stats;
-
+    //1.查询vlan_id对应的vlan网络接口
 	vlan_dev = vlan_find_dev(skb->dev, vlan_proto, vlan_id);
 	if (!vlan_dev)
-		return false;
+		return false;  //如果没有查到那么直接返回
 
 	skb = *skbp = skb_share_check(skb, GFP_ATOMIC);
 	if (unlikely(!skb))
@@ -27,7 +27,7 @@ bool vlan_do_receive(struct sk_buff **skbp)
 		*skbp = NULL;
 		return false;
 	}
-
+    //2.更新skb->dev指向的vlan网络接口
 	skb->dev = vlan_dev;
 	if (unlikely(skb->pkt_type == PACKET_OTHERHOST)) {
 		/* Our lower layer thinks this is not local, let's make sure.
@@ -55,7 +55,7 @@ bool vlan_do_receive(struct sk_buff **skbp)
 		skb_pull(skb, offset + VLAN_HLEN);
 		skb_reset_mac_len(skb);
 	}
-
+    //3.更新vlan网络接口统计信息并重置skb->vlan_tic
 	skb->priority = vlan_get_ingress_priority(vlan_dev, skb->vlan_tci);
 	skb->vlan_tci = 0;
 

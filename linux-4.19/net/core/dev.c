@@ -4780,7 +4780,7 @@ another_round:
 	skb->skb_iif = skb->dev->ifindex;
 
 	__this_cpu_inc(softnet_data.processed);
-
+    //1.脱掉vlan头
 	if (skb->protocol == cpu_to_be16(ETH_P_8021Q) ||
 	    skb->protocol == cpu_to_be16(ETH_P_8021AD)) {
 		skb = skb_vlan_untag(skb);
@@ -4793,7 +4793,7 @@ another_round:
 
 	if (pfmemalloc)
 		goto skip_taps;
-
+    //2.移交ptype_all网络报文处理
 	list_for_each_entry_rcu(ptype, &ptype_all, list) {
 		if (pt_prev)
 			ret = deliver_skb(skb, pt_prev, orig_dev);
@@ -4821,7 +4821,7 @@ skip_taps:
 skip_classify:
 	if (pfmemalloc && !skb_pfmemalloc_protocol(skb))
 		goto drop;
-
+    //3.移交vlan模块处理函数，更新skb->dev为对应的vlan网络接口
 	if (skb_vlan_tag_present(skb)) {
 		if (pt_prev) {
 			ret = deliver_skb(skb, pt_prev, orig_dev);
@@ -4863,7 +4863,7 @@ skip_classify:
 		 */
 		skb->vlan_tci = 0;
 	}
-
+    //4.根据skb->protocol协议类型移交对应的协议处理函数接口
 	type = skb->protocol;
 
 	/* deliver only exact match when indicated */
@@ -4903,7 +4903,7 @@ out:
 }
 
 static int __netif_receive_skb_one_core(struct sk_buff *skb, bool pfmemalloc)
-{
+{ 
 	struct net_device *orig_dev = skb->dev;
 	struct packet_type *pt_prev = NULL;
 	int ret;
