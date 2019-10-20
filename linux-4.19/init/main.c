@@ -1139,7 +1139,7 @@ static noinline void __init kernel_init_freeable(void)
 
 	page_alloc_init_late();
 
-	do_basic_setup();//4.
+	do_basic_setup();//4.执行各个init_call的地方
 
 	/* Open the /dev/console on the rootfs, this should never fail */
 	if (ksys_open((const char __user *) "/dev/console", O_RDWR, 0) < 0)
