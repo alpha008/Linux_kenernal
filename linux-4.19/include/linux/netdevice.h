@@ -157,11 +157,8 @@ static inline bool dev_xmit_complete(int rc)
 #define MAX_HEADER (LL_MAX_HEADER + 48)
 #endif
 
-/*
- *	Old network device statistics. Fields are native words
- *	(unsigned long) so they can be read and written atomically.
- */
-
+/*  Old network device statistics. Fields are native words
+ *	(unsigned long) so they can be read and written atomically. */
 struct net_device_stats {
 	unsigned long	rx_packets;
 	unsigned long	tx_packets;

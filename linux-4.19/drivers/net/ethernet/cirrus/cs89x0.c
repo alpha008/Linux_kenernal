@@ -667,8 +667,7 @@ detect_aui(struct net_device *dev)
 }
 
 /* We have a good packet(s), get it/them out of the buffers. */
-static void
-net_rx(struct net_device *dev)
+static void net_rx(struct net_device *dev)
 {
 	struct net_local *lp = netdev_priv(dev);
 	struct sk_buff *skb;
@@ -709,6 +708,9 @@ net_rx(struct net_device *dev)
  * Handle the network interface interrupts.
  */
 //此处中断接收报文
+
+
+
 static irqreturn_t net_interrupt(int irq, void *dev_id)
 {
 	struct net_device *dev = dev_id;
@@ -1139,7 +1141,8 @@ static void net_timeout(struct net_device *dev)
 	netif_wake_queue(dev);
 }
 
-static netdev_tx_t net_send_packet(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t 
+net_send_packet(struct sk_buff *skb, struct net_device *dev)
 {
 	struct net_local *lp = netdev_priv(dev);
 	unsigned long flags;
@@ -1561,12 +1564,21 @@ cs89x0_probe1(struct net_device *dev, void __iomem *ioaddr, int modular)
 	/* print the ethernet address. */
 	pr_cont(", MAC %pM\n", dev->dev_addr);
 
+
+    
+    //初始化dev的各种成员变量
 	dev->netdev_ops	= &net_ops;
+
+
+    
 	dev->watchdog_timeo = HZ;
 
 	cs89_dbg(0, info, "cs89x0_probe1() successful\n");
 
 	retval = register_netdev(dev);
+
+
+      
 	if (retval)
 		goto out2;
 	return 0;
@@ -1624,6 +1636,9 @@ cs89x0_ioport_probe(struct net_device *dev, unsigned long ioport, int modular)
 	}
 
 	ret = cs89x0_probe1(dev, io_mem, modular);
+
+
+    
 	if (!ret)
 		goto out;
 unmap:
@@ -1772,7 +1787,7 @@ int __init init_module(void)
 		return -ENOMEM;
 
 	dev->irq = irq;
-	dev->base_addr = io;
+	dev->base_addr = io;//硬件地址
 	lp = netdev_priv(dev);
 
 #if ALLOW_DMA
@@ -1816,7 +1831,11 @@ int __init init_module(void)
 		goto out;
 	}
 #endif
+
+
 	ret = cs89x0_ioport_probe(dev, io, 1);
+
+
 	if (ret)
 		goto out;
 
