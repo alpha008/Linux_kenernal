@@ -29,7 +29,7 @@ enum mdio_mutex_lock_class {
 struct mdio_device {
 	struct device dev;
 
-	struct mii_bus *bus;
+	struct mii_bus *bus;//总线
 	char modalias[MDIO_NAME_SIZE];
 
 	int (*bus_match)(struct device *dev, struct device_driver *drv);

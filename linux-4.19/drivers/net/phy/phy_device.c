@@ -320,25 +320,21 @@ static int phy_scan_fixups(struct phy_device *phydev)
 
 	return 0;
 }
-
+//根据phydrv->phy_id & phydrv->phy_id_mask来匹配的
 static int phy_bus_match(struct device *dev, struct device_driver *drv)
 {
 	struct phy_device *phydev = to_phy_device(dev);
 	struct phy_driver *phydrv = to_phy_driver(drv);
 	const int num_ids = ARRAY_SIZE(phydev->c45_ids.device_ids);
 	int i;
-
 	if (!(phydrv->mdiodrv.flags & MDIO_DEVICE_IS_PHY))
 		return 0;
-
 	if (phydrv->match_phy_device)
 		return phydrv->match_phy_device(phydev);
-
 	if (phydev->is_c45) {
 		for (i = 1; i < num_ids; i++) {
 			if (!(phydev->c45_ids.devices_in_package & (1 << i)))
 				continue;
-
 			if ((phydrv->phy_id & phydrv->phy_id_mask) ==
 			    (phydev->c45_ids.device_ids[i] &
 			     phydrv->phy_id_mask))
@@ -585,7 +581,7 @@ static int get_phy_id(struct mii_bus *bus, int addr, u32 *phy_id,
 
 	if (is_c45)
 		return get_phy_c45_ids(bus, addr, phy_id, c45_ids);
-
+//可见最终通过mdiobus_read 去读寄存器
 	/* Grab the bits from PHYIR1, and put them in the upper half */
 	phy_reg = mdiobus_read(bus, addr, MII_PHYSID1);
 	if (phy_reg < 0) {
@@ -622,6 +618,10 @@ static int get_phy_id(struct mii_bus *bus, int addr, u32 *phy_id,
  * Description: Reads the ID registers of the PHY at @addr on the
  *   @bus, then allocates and returns the phy_device to represent it.
  */
+ /*如果get_phy_device 返回成功的话，说明这个phy id对应的硬件是存在的，
+ 就调用phy_device_register 创建phy device*/
+
+              
 struct phy_device *get_phy_device(struct mii_bus *bus, int addr, bool is_c45)
 {
 	struct phy_c45_device_ids c45_ids = {0};
@@ -1998,11 +1998,11 @@ static int __init phy_init(void)
 	rc = mdio_bus_init();
 	if (rc)
 		return rc;
-
+//10GE注册
 	rc = phy_driver_register(&genphy_10g_driver, THIS_MODULE);
 	if (rc)
 		goto err_10g;
-
+//通用网卡注册
 	rc = phy_driver_register(&genphy_driver, THIS_MODULE);
 	if (rc) {
 		phy_driver_unregister(&genphy_10g_driver);

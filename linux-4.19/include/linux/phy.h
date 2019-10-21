@@ -190,7 +190,7 @@ struct sk_buff;
  * The Bus class for PHYs.  Devices which provide access to
  * PHYs should register using this structure
  */
-struct mii_bus {
+struct mii_bus {//访问PHY需要此总线
 	struct module *owner;
 	const char *name;
 	char id[MII_BUS_ID_SIZE];

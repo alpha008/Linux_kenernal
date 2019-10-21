@@ -364,7 +364,7 @@ static int xgene_mdio_probe(struct platform_device *pdev)
 	pdata = devm_kzalloc(dev, sizeof(struct xgene_mdio_pdata), GFP_KERNEL);
 	if (!pdata)
 		return -ENOMEM;
-	pdata->mdio_id = mdio_id;
+	pdata->mdio_id = module_phy_driver(marvell_drivers);
 	pdata->dev = dev;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
@@ -472,7 +472,7 @@ static struct platform_driver xgene_mdio_driver = {
 	.probe = xgene_mdio_probe,
 	.remove = xgene_mdio_remove,
 };
-
+//平台驱动注册
 module_platform_driver(xgene_mdio_driver);
 
 MODULE_DESCRIPTION("APM X-Gene SoC MDIO driver");

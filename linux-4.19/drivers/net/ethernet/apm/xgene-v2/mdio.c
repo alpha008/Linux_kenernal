@@ -106,7 +106,7 @@ void xge_mdio_remove(struct net_device *ndev)
 
 	mdiobus_free(mdio_bus);
 }
-
+//类似
 int xge_mdio_config(struct net_device *ndev)
 {
 	struct xge_pdata *pdata = netdev_priv(ndev);

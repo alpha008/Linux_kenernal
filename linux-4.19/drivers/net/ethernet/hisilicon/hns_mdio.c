@@ -280,7 +280,7 @@ static int hns_mdio_write(struct mii_bus *bus,
  * @value: register value
  *
  * Return phy register value
- */
+ *///read
 static int hns_mdio_read(struct mii_bus *bus, int phy_id, int regnum)
 {
 	int ret;
@@ -519,6 +519,9 @@ static int hns_mdio_probe(struct platform_device *pdev)
 
 		/* Register the MDIO bus */
 		ret = mdiobus_register(new_bus);
+
+
+        
 	} else {
 		dev_err(&pdev->dev, "Can not get cfg data from DT or ACPI\n");
 		ret = -ENXIO;

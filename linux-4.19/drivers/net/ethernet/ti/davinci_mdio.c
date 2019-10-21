@@ -536,7 +536,7 @@ static struct platform_driver davinci_mdio_driver = {
 	.probe = davinci_mdio_probe,
 	.remove = davinci_mdio_remove,
 };
-
+//Mdio设备注册到总线
 static int __init davinci_mdio_init(void)
 {
 	return platform_driver_register(&davinci_mdio_driver);

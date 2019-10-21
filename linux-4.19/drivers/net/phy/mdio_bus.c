@@ -402,6 +402,7 @@ int __mdiobus_register(struct mii_bus *bus, struct module *owner)
 
 	if (bus->reset)
 		bus->reset(bus);
+//这里进行扫描，扫描规则根据mask和id
 
 	for (i = 0; i < PHY_MAX_ADDR; i++) {
 		if ((bus->phy_mask & (1 << i)) == 0) {
@@ -504,10 +505,10 @@ EXPORT_SYMBOL(mdiobus_free);
  * probably not be found during the scan.
  */
 struct phy_device *mdiobus_scan(struct mii_bus *bus, int addr)
+
 {
 	struct phy_device *phydev;
 	int err;
-
 	phydev = get_phy_device(bus, addr, false);
 	if (IS_ERR(phydev))
 		return phydev;
@@ -725,7 +726,7 @@ struct bus_type mdio_bus_type = {
 
 
 EXPORT_SYMBOL(mdio_bus_type);
-
+//MDIO总线注册
 int __init mdio_bus_init(void)
 {
 	int ret;
