@@ -349,6 +349,8 @@ static const struct of_device_id davinci_mdio_of_mtable[] = {
 	{ .compatible = "ti,cpsw-mdio", .data = &of_cpsw_mdio_data},
 	{ /* sentinel */ },
 };
+
+
 MODULE_DEVICE_TABLE(of, davinci_mdio_of_mtable);
 #endif
 

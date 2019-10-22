@@ -329,21 +329,17 @@ net_send_packet(struct sk_buff *skb, struct net_device *dev)
 {
 	struct net_local *lp = netdev_priv(dev);
 	unsigned long flags;
-
 	netif_dbg(lp, tx_queued, dev, "sent %d byte packet of type %x\n",
 		  skb->len, skb->data[ETH_ALEN + ETH_ALEN] << 8 |
 		  skb->data[ETH_ALEN + ETH_ALEN + 1]);
-
 	/* keep the upload from being interrupted, since we
 	   ask the chip to start transmitting before the
 	   whole packet has been completely uploaded. */
 	local_irq_save(flags);
 	netif_stop_queue(dev);
-
 	/* initiate a transmit sequence */
 	writereg(dev, PP_TxCMD, lp->send_cmd);
 	writereg(dev, PP_TxLength, skb->len);
-
 	/* Test to see if the chip has allocated memory for the packet */
 	if ((readreg(dev, PP_BusST) & READY_FOR_TX_NOW) == 0) {
 		/* Gasp!  It hasn't.  But that shouldn't happen since
@@ -351,14 +347,10 @@ net_send_packet(struct sk_buff *skb, struct net_device *dev)
 		local_irq_restore(flags);
 		return NETDEV_TX_BUSY;
 	}
-
 	/* Write the contents of the packet */
-	skb_copy_from_linear_data(skb, (void *)(dev->mem_start + PP_TxFrame),
-				  skb->len+1);
-
+	skb_copy_from_linear_data(skb, (void *)(dev->mem_start + PP_TxFrame),skb->len+1);
 	local_irq_restore(flags);
 	dev_kfree_skb (skb);
-
 	return NETDEV_TX_OK;
 }
 
@@ -369,10 +361,8 @@ static irqreturn_t net_interrupt(int irq, void *dev_id)
 	struct net_device *dev = dev_id;
 	struct net_local *lp;
 	int ioaddr, status;
-
 	ioaddr = dev->base_addr;
 	lp = netdev_priv(dev);
-
 	/* we MUST read all the events out of the ISQ, otherwise we'll never
            get interrupted again.  As a consequence, we can't have any limit
            on the number of times we loop in the interrupt handler.  The

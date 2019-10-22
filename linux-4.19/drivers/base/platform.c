@@ -622,8 +622,7 @@ static void platform_drv_shutdown(struct device *_dev)
  * @drv: platform driver structure
  * @owner: owning module/driver
  */
-int __platform_driver_register(struct platform_driver *drv,
-				struct module *owner)
+int __platform_driver_register(struct platform_driver *drv, struct module *owner)
 {
 	drv->driver.owner = owner;
 	drv->driver.bus = &platform_bus_type;

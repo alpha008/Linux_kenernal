@@ -672,7 +672,6 @@ static void net_rx(struct net_device *dev)
 	struct net_local *lp = netdev_priv(dev);
 	struct sk_buff *skb;
 	int status, length;
-
 	status = ioread16(lp->virt_addr + RX_FRAME_PORT);
 	length = ioread16(lp->virt_addr + RX_FRAME_PORT);
 
@@ -680,7 +679,6 @@ static void net_rx(struct net_device *dev)
 		count_rx_errors(status, dev);
 		return;
 	}
-
 	/* Malloc up new buffer. */
 	skb = netdev_alloc_skb(dev, length + 2);
 	if (skb == NULL) {
@@ -688,18 +686,15 @@ static void net_rx(struct net_device *dev)
 		return;
 	}
 	skb_reserve(skb, 2);	/* longword align L3 header */
-
 	readwords(lp, RX_FRAME_PORT, skb_put(skb, length), length >> 1);
 	if (length & 1)
 		skb->data[length-1] = ioread16(lp->virt_addr + RX_FRAME_PORT);
-
 	cs89_dbg(3, debug, "%s: received %d byte packet of type %x\n",
 		 dev->name, length,
 		 (skb->data[ETH_ALEN + ETH_ALEN] << 8) |
 		 skb->data[ETH_ALEN + ETH_ALEN + 1]);
-
 	skb->protocol = eth_type_trans(skb, dev);
-	netif_rx(skb);
+	netif_rx(skb);//将skb交给上层协议
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += length;
 }
@@ -708,8 +703,6 @@ static void net_rx(struct net_device *dev)
  * Handle the network interface interrupts.
  */
 //此处中断接收报文
-
-
 
 static irqreturn_t net_interrupt(int irq, void *dev_id)
 {
@@ -1562,15 +1555,9 @@ cs89x0_probe1(struct net_device *dev, void __iomem *ioaddr, int modular)
 		pr_cont(", programmed I/O");
 
 	/* print the ethernet address. */
-	pr_cont(", MAC %pM\n", dev->dev_addr);
-
-
-    
+	pr_cont(", MAC %pM\n", dev->dev_addr);   
     //初始化dev的各种成员变量
 	dev->netdev_ops	= &net_ops;
-
-
-    
 	dev->watchdog_timeo = HZ;
 
 	cs89_dbg(0, info, "cs89x0_probe1() successful\n");
@@ -1771,7 +1758,7 @@ MODULE_LICENSE("GPL");
  * if 10B-2, then agent other than driver will enable DC/DC converter
  * (hw or software util)
  */
-
+#if 0
 int __init init_module(void)
 {
 	struct net_device *dev = alloc_etherdev(sizeof(struct net_local));
@@ -1845,6 +1832,44 @@ out:
 	free_netdev(dev);
 	return ret;
 }
+
+#else 
+
+static int __init cs89x0_probe1(struct net_device *dev, int ioaddr, int modular)
+{
+　　struct net_local *lp = netdev_priv(dev);
+　　static unsigned version_printed;
+　　unsigned rev_type = 0;
+　　int eeprom_buff[CHKSUM_LEN];
+
+　　writeword(ioaddr, ADD_PORT, PP_ChipID);
+　　tmp = readword(ioaddr, DATA_PORT);　　　　　　//对硬件的初始化
+　　
+　　for (i = 0; i < ETH_ALEN/2; i++) 　　　　　 　//初始化MAC地址
+　　{
+　　　　dev->dev_addr[i*2] = eeprom_buff[i];
+　　　　dev->dev_addr[i*2+1] = eeprom_buff[i] >> 8;
+　　}　
+　　dev->netdev_ops    = &net_ops;　　　　　　　 　//初始化netdev_ops
+　　retval = register_netdev(dev);　　　　　　　　//注册网卡驱动
+}
+
+int __init init_module(void)
+{
+	struct net_device *dev = alloc_etherdev(sizeof(struct net_local));
+	struct net_local *lp;
+	int ret = 0;
+	dev->irq = irq;
+	dev->base_addr = io;//硬件地址
+	lp = netdev_priv(dev);
+	ret = cs89x0_ioport_probe(dev, io, 1);
+	if (ret)
+		goto out;
+	dev_cs89x0 = dev;
+}
+
+#endif
+
 
 void __exit
 cleanup_module(void)

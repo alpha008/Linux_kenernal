@@ -1873,7 +1873,7 @@ static int phy_probe(struct device *dev)
 	} else {
 		phydev->supported |= SUPPORTED_Pause | SUPPORTED_Asym_Pause;
 	}
-
+//设置成ready模式
 	/* Set the state to READY by default */
 	phydev->state = PHY_READY;
 
@@ -1929,7 +1929,7 @@ int phy_driver_register(struct phy_driver *new_driver, struct module *owner)
 	new_driver->mdiodrv.driver.probe = phy_probe;
 	new_driver->mdiodrv.driver.remove = phy_remove;
 	new_driver->mdiodrv.driver.owner = owner;
-
+//这里注册成功会调用驱动的phy_probe函数
 	retval = driver_register(&new_driver->mdiodrv.driver);
 	if (retval) {
 		pr_err("%s: Error %d in registering driver\n",

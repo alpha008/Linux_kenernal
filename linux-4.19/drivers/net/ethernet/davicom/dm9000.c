@@ -906,8 +906,7 @@ dm9000_unmask_interrupts(struct board_info *db)
 /*
  * Initialize dm9000 board
  */
-static void
-dm9000_init_dm9000(struct net_device *dev)
+static void dm9000_init_dm9000(struct net_device *dev)
 {
 	struct board_info *db = netdev_priv(dev);
 	unsigned int imr;
