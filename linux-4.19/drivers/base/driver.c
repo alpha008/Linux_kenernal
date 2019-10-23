@@ -138,36 +138,40 @@ void driver_remove_groups(struct device_driver *drv,
 /**
  * driver_register - register driver with bus
  * @drv: driver to register
- *
  * We pass off most of the work to the bus_add_driver() call,
  * since most of the things we have to do deal with the bus
  * structures.
  */
 int driver_register(struct device_driver *drv)
 {
+/*
+new_driver->mdiodrv.driver.name = new_driver->name;//genphy_10g_driver
+new_driver->mdiodrv.driver.bus = &mdio_bus_type;
+new_driver->mdiodrv.driver.probe = phy_probe;
+//MDIO总线中注册的10GE的驱动的.probe函数 static int phy_probe(struct device *dev)
+//说白了就是将genphy_10g_driver此驱动的信息放到mdio_driver_common内部维护的
+//struct device_driver driver;
+//MDIO驱动内封装了具体网卡的信息转移，将其的信息封装到device_driver内
+new_driver->mdiodrv.driver.remove = phy_remove;
+new_driver->mdiodrv.driver.owner = owner;
+//genphy_10g_driver
+*/
 	int ret;
 	struct device_driver *other;
 
-	if (!drv->bus->p) {
-		pr_err("Driver '%s' was unable to register with bus_type '%s' because the bus was not initialized.\n",
-			   drv->name, drv->bus->name);
+	if (!drv->bus->p) {//bus内与p相互关联
+		pr_err("Driver '%s' was unable to register with bus_type '%s' because the bus was not initialized.\n", drv->name, drv->bus->name);
 		return -EINVAL;
 	}
-
-	if ((drv->bus->probe && drv->probe) ||
-	    (drv->bus->remove && drv->remove) ||
-	    (drv->bus->shutdown && drv->shutdown))
-		printk(KERN_WARNING "Driver '%s' needs updating - please use "
-			"bus_type methods\n", drv->name);
-
-	other = driver_find(drv->name, drv->bus);
-	if (other) {
-		printk(KERN_ERR "Error: Driver '%s' is already registered, "
-			"aborting...\n", drv->name);
+    //下面drv->bus->probe    drv->bus->remove  drv->bus->shutdown  都为空，因此不执行
+	if ((drv->bus->probe && drv->probe) ||(drv->bus->remove && drv->remove) ||(drv->bus->shutdown && drv->shutdown))
+		printk(KERN_WARNING "Driver '%s' needs updating - please use ""bus_type methods\n", drv->name);
+	other = driver_find(drv->name, drv->bus); // genphy_10g_driver   mdio_bus_type
+	if (other) {//找到了说明注册过了，没找到说明第一次注册
+		printk(KERN_ERR "Error: Driver '%s' is already registered, ""aborting...\n", drv->name);
 		return -EBUSY;
 	}
-
-	ret = bus_add_driver(drv);
+	ret = bus_add_driver(drv);//将此驱动添加到总线
 	if (ret)
 		return ret;
 	ret = driver_add_groups(drv, drv->groups);
@@ -212,7 +216,7 @@ EXPORT_SYMBOL_GPL(driver_unregister);
  */
 struct device_driver *driver_find(const char *name, struct bus_type *bus)
 {
-	struct kobject *k = kset_find_obj(bus->p->drivers_kset, name);
+	struct kobject *k = kset_find_obj(bus->p->drivers_kset, name);// genphy_10g_driver   mdio_bus_type
 	struct driver_private *priv;
 
 	if (k) {

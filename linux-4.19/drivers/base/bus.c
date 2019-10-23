@@ -295,9 +295,11 @@ static struct device *next_device(struct klist_iter *i)
  * to retain this data, it should do so, and increment the reference
  * count in the supplied callback.
  */
-int bus_for_each_dev(struct bus_type *bus, struct device *start,
-		     void *data, int (*fn)(struct device *, void *))
-{
+// bus_for_each_dev(drv->bus, NULL, drv, __driver_attach);
+int bus_for_each_dev(struct bus_type *bus, struct device *start,void *data, int (*fn)(struct device *, void *))
+//                          mdio_bus_type          NULL            genphy_10g_driver      __driver_attach
+
+{//  genphy_10g_driver   mdio_bus_type  __driver_attach
 	struct klist_iter i;
 	struct device *dev;
 	int error = 0;
@@ -305,10 +307,9 @@ int bus_for_each_dev(struct bus_type *bus, struct device *start,
 	if (!bus || !bus->p)
 		return -EINVAL;
 
-	klist_iter_init_node(&bus->p->klist_devices, &i,
-			     (start ? &start->p->knode_bus : NULL));
+	klist_iter_init_node(&bus->p->klist_devices, &i,(start ? &start->p->knode_bus : NULL));
 	while (!error && (dev = next_device(&i)))
-		error = fn(dev, data);
+		error = fn(dev, data);//dev = null（设备--未知）      genphy_10g_driver--驱动
 	klist_iter_exit(&i);
 	return error;
 }
@@ -625,7 +626,7 @@ static void driver_attach_async(void *_drv, async_cookie_t cookie)
  * @drv: driver.
  */
 int bus_add_driver(struct device_driver *drv)
-{
+{                                        //genphy_10g_driver mdio_bus_type
 	struct bus_type *bus;
 	struct driver_private *priv;
 	bus = bus_get(drv->bus);
@@ -639,11 +640,11 @@ int bus_add_driver(struct device_driver *drv)
     //2.将driver 加入 Bus->p->kist_drivers链表
 	klist_add_tail(&priv->knode_bus, &bus->p->klist_drivers);
     /*3. 匹配 dev*/
-    if (drv->bus->p->drivers_autoprobe) {
+    if (drv->bus->p->drivers_autoprobe) {//priv->drivers_autoprobe = 1;//此处已经赋值为1
 		if (driver_allows_async_probing(drv)) {
 			async_schedule(driver_attach_async, drv);
 		} else {
-			error = driver_attach(drv);
+			error = driver_attach(drv);//拿着此驱动去匹配           genphy_10g_driver mdio_bus_type
 		}
 	}
     /*4. 如果设置了drv->mod_name 根据名字寻找模块*/
@@ -802,14 +803,14 @@ static BUS_ATTR(uevent, S_IWUSR, NULL, bus_uevent_store);
  * infrastructure, then register the children subsystems it has:
  * the devices and drivers that belong to the subsystem.
  */
-int bus_register(struct bus_type *bus)
+int bus_register(struct bus_type *bus)//mdio_bus_type
 {
 	int retval;
-	struct subsys_private *priv;
+	struct subsys_private *priv;//内部含有bus成员
 	struct lock_class_key *key = &bus->lock_key;
 	priv = kzalloc(sizeof(struct subsys_private), GFP_KERNEL);
-	priv->bus = bus;    
-	bus->p = priv;
+	priv->bus = bus;  //mdio_bus_type    
+	bus->p = priv;//mdio_bus_type  bus内维护了pri 与 bus相互关联
     /* 1. bus 与 prv 相互建立联系  私有数据 .bus ->  bus 本身*/  
 	BLOCKING_INIT_NOTIFIER_HEAD(&priv->bus_notifier);
     /* 2. 设置 bus->prv->subsys->kobj 设置 priv->subsys.kobj.name = bus->name  对应于/sys/ 目录下的目录名*/
@@ -818,7 +819,7 @@ int bus_register(struct bus_type *bus)
 	priv->subsys.kobj.kset = bus_kset;
     /* 4. 所有的priv->subsys.kobj.ktype 等于 bus_ktype */
 	priv->subsys.kobj.ktype = &bus_ktype;
-	priv->drivers_autoprobe = 1;
+	priv->drivers_autoprobe = 1;//此处已经赋值为1
     /* 5.注册 kset (bus->prv->subsys priv->devices_kset priv->drivers_kset)
      注册 priv->subsys ，由于 priv->subsys.kobj.kset = bus_kset，所以会在 /sys/bus/目录下创建 目录 如/sys/*/
 	retval = kset_register(&priv->subsys);

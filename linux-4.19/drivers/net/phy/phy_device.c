@@ -1823,6 +1823,7 @@ static void of_set_phy_eee_broken(struct phy_device *phydev)
  */
 static int phy_probe(struct device *dev)
 {
+//genphy_10g_driver->probe(dev)
 	struct phy_device *phydev = to_phy_device(dev);
 	struct device_driver *drv = phydev->mdio.dev.driver;
 	struct phy_driver *phydrv = to_phy_driver(drv);
@@ -1920,26 +1921,28 @@ static int phy_remove(struct device *dev)
  * @owner: module owning this PHY
  */
 int phy_driver_register(struct phy_driver *new_driver, struct module *owner)
-{
+{                           //  genphy_10g_driver  "Generic 10G PHY"
 	int retval;
-
 	new_driver->mdiodrv.flags |= MDIO_DEVICE_IS_PHY;
-	new_driver->mdiodrv.driver.name = new_driver->name;
+	new_driver->mdiodrv.driver.name = new_driver->name;//genphy_10g_driver
 	new_driver->mdiodrv.driver.bus = &mdio_bus_type;
-	new_driver->mdiodrv.driver.probe = phy_probe;
+	new_driver->mdiodrv.driver.probe = phy_probe;//这里执行的赋值
+	//genphy_10g_driver->probe(dev)这么执行的
+    //MDIO总线中注册的10GE的驱动的.probe函数 static int phy_probe(struct device *dev)
+    //说白了就是将genphy_10g_driver此驱动的信息放到mdio_driver_common内部维护的
+    //struct device_driver driver;
+    //MDIO驱动内封装了具体网卡的信息转移，将其的信息封装到device_driver内
 	new_driver->mdiodrv.driver.remove = phy_remove;
 	new_driver->mdiodrv.driver.owner = owner;
 //这里注册成功会调用驱动的phy_probe函数
-	retval = driver_register(&new_driver->mdiodrv.driver);
+	retval = driver_register(&new_driver->mdiodrv.driver); //genphy_10g_driver
+//拿着mdio_driver_common内维护的驱动去注册
 	if (retval) {
 		pr_err("%s: Error %d in registering driver\n",
 		       new_driver->name, retval);
-
 		return retval;
 	}
-
 	pr_debug("%s: Registered new driver\n", new_driver->name);
-
 	return 0;
 }
 EXPORT_SYMBOL(phy_driver_register);
@@ -1990,11 +1993,10 @@ static struct phy_driver genphy_driver = {
 	.resume		= genphy_resume,
 	.set_loopback   = genphy_loopback,
 };
-
+//
 static int __init phy_init(void)
 {
 	int rc;
-
 	rc = mdio_bus_init();
 	if (rc)
 		return rc;

@@ -118,7 +118,7 @@ struct bus_type {
 	const struct attribute_group **bus_groups;
 	const struct attribute_group **dev_groups;
 	const struct attribute_group **drv_groups;
-	struct subsys_private *p;
+	struct subsys_private *p;//这里与bus相互关联
 	const struct dev_pm_ops *pm;
 
 	int (*match)(struct device *dev, struct device_driver *drv);

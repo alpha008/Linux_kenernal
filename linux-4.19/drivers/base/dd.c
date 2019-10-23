@@ -444,11 +444,10 @@ static void driver_deferred_probe_add_trigger(struct device *dev,
 }
 
 static int really_probe(struct device *dev, struct device_driver *drv)
-{
+{   //dev = null   (设备--未知)       genphy_10g_driver   
 	int ret = -EPROBE_DEFER;
 	int local_trigger_count = atomic_read(&deferred_trigger_count);
-	bool test_remove = IS_ENABLED(CONFIG_DEBUG_TEST_DRIVER_REMOVE) &&
-			   !drv->suppress_bind_attrs;
+	bool test_remove = IS_ENABLED(CONFIG_DEBUG_TEST_DRIVER_REMOVE) &&!drv->suppress_bind_attrs;
 /* make sure driver won't have bind/unbind attributes
    drv->driver.suppress_bind_attrs = true; //666
 */
@@ -470,8 +469,7 @@ static int really_probe(struct device *dev, struct device_driver *drv)
 		return ret;
 
 	atomic_inc(&probe_count);
-	pr_debug("bus: '%s': %s: probing driver %s with device %s\n",
-		 drv->bus->name, __func__, drv->name, dev_name(dev));
+	pr_debug("bus: '%s': %s: probing driver %s with device %s\n",drv->bus->name, __func__, drv->name, dev_name(dev));
 	WARN_ON(!list_empty(&dev->devres_head));
 
 re_probe:
@@ -498,14 +496,15 @@ re_probe:
 			goto probe_failed;
 	}
 
-	if (dev->bus->probe) {//1.先调用总线的驱动函数
-		ret = dev->bus->probe(dev);//66
+	if (dev->bus->probe) {           //1.先调用设备总线的驱动函数
+		ret = dev->bus->probe(dev);  //dev = null   (设备--未知)       genphy_10g_driver  
 		if (ret)
 			goto probe_failed;
-	} else if (drv->probe) {//2.在调用驱动的函数
-		ret = drv->probe(dev);//66
-		if (ret)
-			goto probe_failed;
+	} else if (drv->probe) {       //2.在调用驱动的函数
+		ret = drv->probe(dev);     //genphy_10g_driver->probe函数
+       //ret = genphy_10g_driver->probe(dev);     //genphy_10g_driver->probe函数
+		if (ret)                   //设备与驱动之间相互匹配
+			goto probe_failed;      //	genphy_10g_driver->mdiodrv.driver.probe = phy_probe;
 	}
 
 	if (test_remove) {
@@ -661,7 +660,7 @@ int driver_probe_device(struct device_driver *drv, struct device *dev)
 	if (initcall_debug)
 		ret = really_probe_debug(dev, drv);
 	else
-		ret = really_probe(dev, drv);//66
+		ret = really_probe(dev, drv);  //dev = null   (设备--未知)       genphy_10g_driver   
 	pm_request_idle(dev);
 
 	if (dev->parent)
@@ -864,9 +863,9 @@ void device_initial_probe(struct device *dev)
 	__device_attach(dev, true);
 }
 
-static int __driver_attach(struct device *dev, void *data)
-{
-	struct device_driver *drv = data;
+static int __driver_attach(struct device *dev, void *data)  //genphy_10g_driver   mdio_bus_type
+{//dev = null（设备--未知）                   genphy_10g_driver--驱动
+	struct device_driver *drv = data;     //genphy_10g_driver
 	int ret;
 
 	/*
@@ -879,7 +878,7 @@ static int __driver_attach(struct device *dev, void *data)
 	 * is an error.
 	 */
 
-	ret = driver_match_device(drv, dev);
+	ret = driver_match_device(drv, dev);  //当匹配成功后
 	if (ret == 0) {
 		/* no match */
 		return 0;
@@ -894,8 +893,8 @@ static int __driver_attach(struct device *dev, void *data)
 	if (dev->parent && dev->bus->need_parent_lock)
 		device_lock(dev->parent);
 	device_lock(dev);
-	if (!dev->driver)//666
-		driver_probe_device(drv, dev);
+	if (!dev->driver)      //  genphy_10g_driver  此驱动会去匹配到注册到此总线上的设备
+		driver_probe_device(drv, dev);  //genphy_10g_driver   //dev = null（设备--未知）     
 	device_unlock(dev);
 	if (dev->parent && dev->bus->need_parent_lock)
 		device_unlock(dev->parent);
@@ -912,7 +911,7 @@ static int __driver_attach(struct device *dev, void *data)
  * returns 0 and the @dev->driver is set, we've found a
  * compatible pair.
  */
-int driver_attach(struct device_driver *drv)
+int driver_attach(struct device_driver *drv)//  genphy_10g_driver   mdio_bus_type
 {
 	return bus_for_each_dev(drv->bus, NULL, drv, __driver_attach);
 }
