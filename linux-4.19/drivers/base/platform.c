@@ -622,6 +622,7 @@ static void platform_drv_shutdown(struct device *_dev)
  * @drv: platform driver structure
  * @owner: owning module/driver
  */
+ //这里开始注册                                 cpsw_driver    THIS_MODULE  
 int __platform_driver_register(struct platform_driver *drv, struct module *owner)
 {
 	drv->driver.owner = owner;

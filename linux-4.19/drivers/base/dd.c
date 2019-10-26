@@ -877,7 +877,7 @@ static int __driver_attach(struct device *dev, void *data)  //genphy_10g_driver 
 	 * driver_probe_device() will spit a warning if there
 	 * is an error.
 	 */
-
+                             //genphy_10g_driver
 	ret = driver_match_device(drv, dev);  //当匹配成功后
 	if (ret == 0) {
 		/* no match */
@@ -912,7 +912,7 @@ static int __driver_attach(struct device *dev, void *data)  //genphy_10g_driver 
  * compatible pair.
  */
 int driver_attach(struct device_driver *drv)//  genphy_10g_driver   mdio_bus_type
-{
+{// mdio_bus_type          NULL            genphy_10g_driver      __driver_attach
 	return bus_for_each_dev(drv->bus, NULL, drv, __driver_attach);
 }
 EXPORT_SYMBOL_GPL(driver_attach);

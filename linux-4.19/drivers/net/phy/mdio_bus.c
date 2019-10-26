@@ -694,15 +694,13 @@ EXPORT_SYMBOL(mdiobus_write);
  *   of MDIO devices have different match criteria.
  */
 static int mdio_bus_match(struct device *dev, struct device_driver *drv)
-{
+{                            // null genphy_10g_driver
 	struct mdio_device *mdio = to_mdio_device(dev);
-
+  //获得了一个类似空指针                        genphy_10g_driver
 	if (of_driver_match_device(dev, drv))
 		return 1;
-
-	if (mdio->bus_match)
+	if (mdio->bus_match)//如果MDIO有匹配规则就用一下
 		return mdio->bus_match(dev, drv);
-
 	return 0;
 }
 
@@ -723,25 +721,20 @@ struct bus_type mdio_bus_type = {
 	.match		= mdio_bus_match,
 	.uevent		= mdio_uevent,
 };
-
-
 EXPORT_SYMBOL(mdio_bus_type);
 //MDIO总线注册
 int __init mdio_bus_init(void)
 {
 	int ret;
-
 	ret = class_register(&mdio_bus_class);
 	if (!ret) {
 		ret = bus_register(&mdio_bus_type);
 		if (ret)
 			class_unregister(&mdio_bus_class);
 	}
-
 	return ret;
 }
 EXPORT_SYMBOL_GPL(mdio_bus_init);
-
 #if IS_ENABLED(CONFIG_PHYLIB)
 void mdio_bus_exit(void)
 {

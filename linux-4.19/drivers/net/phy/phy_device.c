@@ -765,7 +765,7 @@ int phy_connect_direct(struct net_device *dev, struct phy_device *phydev,
 		return rc;
 
 	phy_prepare_link(phydev, handler);
-	phy_start_machine(phydev);
+	phy_start_machine(phydev);//开启状态机
 	if (phydev->irq > 0)
 		phy_start_interrupts(phydev);
 
@@ -798,7 +798,7 @@ struct phy_device *phy_connect(struct net_device *dev, const char *bus_id,
 
 	/* Search the list of PHY devices on the mdio bus for the
 	 * PHY with the requested name
-	 */
+	 *///总线根据id来查找
 	d = bus_find_device_by_name(&mdio_bus_type, NULL, bus_id);
 	if (!d) {
 		pr_err("PHY %s not found\n", bus_id);
@@ -984,7 +984,7 @@ int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
 	 * exist, and we should use the genphy driver.
 	 */
 	if (!d->driver) {
-		if (phydev->is_c45)
+		if (phydev->is_c45)//这里就和之前注册的phy驱动联系起来了
 			d->driver = &genphy_10g_driver.mdiodrv.driver;
 		else
 			d->driver = &genphy_driver.mdiodrv.driver;
@@ -1823,13 +1823,13 @@ static void of_set_phy_eee_broken(struct phy_device *phydev)
  */
 static int phy_probe(struct device *dev)
 {
-//genphy_10g_driver->probe(dev)
+//genphy_10g_driver->probe(dev) genphy_10g_driver
 	struct phy_device *phydev = to_phy_device(dev);
-	struct device_driver *drv = phydev->mdio.dev.driver;
+	struct device_driver *drv = phydev->mdio.dev.driver;//genphy_10g_driver
 	struct phy_driver *phydrv = to_phy_driver(drv);
 	int err = 0;
 
-	phydev->drv = phydrv;
+	phydev->drv = phydrv;//genphy_10g_driver
 
 	/* Disable the interrupt if the PHY doesn't support it
 	 * but the interrupt is still a valid one
@@ -1882,7 +1882,7 @@ static int phy_probe(struct device *dev)
 		/* Deassert the reset signal */
 		phy_device_reset(phydev, 0);
 
-		err = phydev->drv->probe(phydev);
+		err = phydev->drv->probe(phydev);//没有驱动就复位
 		if (err) {
 			/* Assert the reset signal */
 			phy_device_reset(phydev, 1);
@@ -2011,7 +2011,6 @@ static int __init phy_init(void)
 err_10g:
 		mdio_bus_exit();
 	}
-
 	return rc;
 }
 

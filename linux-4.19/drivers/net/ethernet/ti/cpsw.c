@@ -1474,7 +1474,7 @@ static void cpsw_slave_open(struct cpsw_slave *slave, struct cpsw_priv *priv)
 		cpsw_ale_add_mcast(cpsw->ale, priv->ndev->broadcast,
 				   1 << slave_port, 0, 0, ALE_MCAST_FWD_2);
 
-	if (slave->data->phy_node) {
+	if (slave->data->phy_node) {//这里就会和phy联系起来
 		phy = of_phy_connect(priv->ndev, slave->data->phy_node,
 				 &cpsw_adjust_link, 0, slave->data->phy_if);
 		if (!phy) {
@@ -1885,7 +1885,7 @@ static int cpsw_ndo_open(struct net_device *ndev)
 	if (!cpsw->usage_count)
 		cpsw_init_host_port(priv);
 	for_each_slave(priv, cpsw_slave_open, priv);
-
+//配置端口之类的操作
 	/* Add default VLAN */
 	if (!cpsw->data.dual_emac)
 		cpsw_add_default_vlan(priv);
@@ -2532,7 +2532,7 @@ static int cpsw_ndo_setup_tc(struct net_device *ndev, enum tc_setup_type type,
 }
 //自动协商开始的地方
 static const struct net_device_ops cpsw_netdev_ops = {
-	.ndo_open		= cpsw_ndo_open,
+	.ndo_open		= cpsw_ndo_open,//当执行ifconfig    up时间会执行里面的cpsw_ndo_open
 	.ndo_stop		= cpsw_ndo_stop,
 	.ndo_start_xmit		= cpsw_ndo_start_xmit,
 	.ndo_set_mac_address	= cpsw_ndo_set_mac_address,
@@ -3285,7 +3285,7 @@ static int cpsw_probe_dual_emac(struct cpsw_priv *priv)
 
 	/* register the network device */
 	SET_NETDEV_DEV(ndev, cpsw->dev);
-	ret = register_netdev(ndev);
+	ret = register_netdev(ndev);//这里又来了一次注册网络设备的操作
 	if (ret) {
 		dev_err(cpsw->dev, "cpsw: error registering net device\n");
 		free_netdev(ndev);
@@ -3326,7 +3326,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	struct cpsw_common		*cpsw;
 	int ret = 0, i, ch;
 	int irq;
-
+//cpsw_common  内部嵌套了device
 	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
 	if (!cpsw)
 		return -ENOMEM;
@@ -3342,7 +3342,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, ndev);
 	priv = netdev_priv(ndev);
 	priv->cpsw = cpsw;
-	priv->ndev = ndev;
+	priv->ndev = ndev;//pri 赋值
 	priv->dev  = &ndev->dev;
 	priv->msg_enable = netif_msg_init(debug_level, CPSW_DEBUG);
 	cpsw->rx_packet_max = max(rx_packet_max, 128);
@@ -3541,8 +3541,9 @@ static int cpsw_probe(struct platform_device *pdev)
 
 	ndev->features |= NETIF_F_HW_VLAN_CTAG_FILTER | NETIF_F_HW_VLAN_CTAG_RX;
 
-	ndev->netdev_ops = &cpsw_netdev_ops;
-	ndev->ethtool_ops = &cpsw_ethtool_ops;
+	ndev->netdev_ops = &cpsw_netdev_ops;//这里获取了上层网卡驱动的操作函数集
+	//当执行ifconfig    up时间会执行里面的cpsw_ndo_open
+	ndev->ethtool_ops = &cpsw_ethtool_ops;//
 	netif_napi_add(ndev, &cpsw->napi_rx,
 		       cpsw->quirk_irq ? cpsw_rx_poll : cpsw_rx_mq_poll,
 		       CPSW_POLL_WEIGHT);
@@ -3553,7 +3554,7 @@ static int cpsw_probe(struct platform_device *pdev)
 
 	/* register the network device */
 	SET_NETDEV_DEV(ndev, &pdev->dev);
-	ret = register_netdev(ndev);
+	ret = register_netdev(ndev);//注册网络设备
 	if (ret) {
 		dev_err(priv->dev, "error registering net device\n");
 		ret = -ENODEV;
@@ -3561,7 +3562,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	}
 
 	if (cpsw->data.dual_emac) {
-		ret = cpsw_probe_dual_emac(priv);
+		ret = cpsw_probe_dual_emac(priv);//第二个口的初始化
 		if (ret) {
 			cpsw_err(priv, probe, "error probe slave 2 emac interface\n");
 			goto clean_unregister_netdev_ret;
@@ -3716,11 +3717,27 @@ static struct platform_driver cpsw_driver = {
 		.pm	 = &cpsw_pm_ops,
 		.of_match_table = cpsw_of_mtable,
 	},
-	.probe = cpsw_probe,
+	.probe = cpsw_probe,//dev->bus->probe(drv->dev)  
 	.remove = cpsw_remove,
 };
 
 module_platform_driver(cpsw_driver);
+//下面为宏展开
+int __platform_driver_register(struct platform_driver *drv, struct module *owner)
+
+static int __init cpsw_driver_init(void)
+{ 
+	return platform_driver_register(&(cpsw_driver),THIS_MODULE); 
+} 
+module_init(cpsw_driver_init);
+
+static void __exit cpsw_driver_exit(void) 
+{ 
+	platform_driver_unregister(&(cpsw_driver),THIS_MODULE );
+}
+module_exit(cpsw_driver_exit);
+
+
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Cyril Chemparathy <cyril@ti.com>");

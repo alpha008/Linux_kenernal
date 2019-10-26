@@ -28,17 +28,17 @@
  */
 struct subsys_private {
 	struct kset subsys;
+    struct klist klist_devices;
+	struct klist klist_drivers;
+    unsigned int drivers_autoprobe:1;
+    struct bus_type *bus;
+    
 	struct kset *devices_kset;
 	struct list_head interfaces;
 	struct mutex mutex;
 
 	struct kset *drivers_kset;
-	struct klist klist_devices;
-	struct klist klist_drivers;
 	struct blocking_notifier_head bus_notifier;
-	unsigned int drivers_autoprobe:1;
-	struct bus_type *bus;
-
 	struct kset glue_dirs;
 	struct class *class;
 };
@@ -117,7 +117,7 @@ extern void driver_detach(struct device_driver *drv);
 extern int driver_probe_device(struct device_driver *drv, struct device *dev);
 extern void driver_deferred_probe_del(struct device *dev);
 static inline int driver_match_device(struct device_driver *drv, struct device *dev)
-{
+{             //genphy_10g_driver          //genphy_10g_driver
 	return drv->bus->match ? drv->bus->match(dev, drv) : 1;
 }
 extern bool driver_allows_async_probing(struct device_driver *drv);

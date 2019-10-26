@@ -197,8 +197,6 @@ struct platform_driver {
 #define platform_driver_register(drv) __platform_driver_register(drv, THIS_MODULE)
 extern int __platform_driver_register(struct platform_driver *,struct module *);
 
-
-
 extern void platform_driver_unregister(struct platform_driver *);
 
 /* non-hotpluggable platform devices may use this so that probe() and

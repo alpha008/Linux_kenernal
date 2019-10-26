@@ -297,7 +297,7 @@ static struct device *next_device(struct klist_iter *i)
  */
 // bus_for_each_dev(drv->bus, NULL, drv, __driver_attach);
 int bus_for_each_dev(struct bus_type *bus, struct device *start,void *data, int (*fn)(struct device *, void *))
-//                          mdio_bus_type          NULL            genphy_10g_driver      __driver_attach
+//                          mdio_bus_type          NULL         genphy_10g_driver      __driver_attach
 
 {//  genphy_10g_driver   mdio_bus_type  __driver_attach
 	struct klist_iter i;
@@ -309,8 +309,9 @@ int bus_for_each_dev(struct bus_type *bus, struct device *start,void *data, int 
 
 	klist_iter_init_node(&bus->p->klist_devices, &i,(start ? &start->p->knode_bus : NULL));
 	while (!error && (dev = next_device(&i)))
+   //error = __driver_attach(dev, genphy_10g_driver);//dev = null（设备--未知）      genphy_10g_driver--驱动
 		error = fn(dev, data);//dev = null（设备--未知）      genphy_10g_driver--驱动
-	klist_iter_exit(&i);
+	klist_iter_exit(&i);// null genphy_10g_driver
 	return error;
 }
 EXPORT_SYMBOL_GPL(bus_for_each_dev);
@@ -806,11 +807,11 @@ static BUS_ATTR(uevent, S_IWUSR, NULL, bus_uevent_store);
 int bus_register(struct bus_type *bus)//mdio_bus_type
 {
 	int retval;
-	struct subsys_private *priv;//内部含有bus成员
+	struct subsys_private *priv;                                 //内部含有bus成员
 	struct lock_class_key *key = &bus->lock_key;
 	priv = kzalloc(sizeof(struct subsys_private), GFP_KERNEL);
-	priv->bus = bus;  //mdio_bus_type    
-	bus->p = priv;//mdio_bus_type  bus内维护了pri 与 bus相互关联
+	priv->bus = bus;                                             //mdio_bus_type    
+	bus->p = priv;                                               //mdio_bus_type  bus内维护了pri 与 bus相互关联
     /* 1. bus 与 prv 相互建立联系  私有数据 .bus ->  bus 本身*/  
 	BLOCKING_INIT_NOTIFIER_HEAD(&priv->bus_notifier);
     /* 2. 设置 bus->prv->subsys->kobj 设置 priv->subsys.kobj.name = bus->name  对应于/sys/ 目录下的目录名*/

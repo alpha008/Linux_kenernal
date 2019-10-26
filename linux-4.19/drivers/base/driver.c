@@ -170,7 +170,7 @@ new_driver->mdiodrv.driver.owner = owner;
 	if (other) {//找到了说明注册过了，没找到说明第一次注册
 		printk(KERN_ERR "Error: Driver '%s' is already registered, ""aborting...\n", drv->name);
 		return -EBUSY;
-	}
+	}//不能重复注册
 	ret = bus_add_driver(drv);//将此驱动添加到总线
 	if (ret)
 		return ret;
