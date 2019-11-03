@@ -686,7 +686,9 @@ static void net_rx(struct net_device *dev)
 		return;
 	}
 	skb_reserve(skb, 2);	/* longword align L3 header */
+    
 	readwords(lp, RX_FRAME_PORT, skb_put(skb, length), length >> 1);
+    
 	if (length & 1)
 		skb->data[length-1] = ioread16(lp->virt_addr + RX_FRAME_PORT);
 	cs89_dbg(3, debug, "%s: received %d byte packet of type %x\n",
@@ -694,7 +696,13 @@ static void net_rx(struct net_device *dev)
 		 (skb->data[ETH_ALEN + ETH_ALEN] << 8) |
 		 skb->data[ETH_ALEN + ETH_ALEN + 1]);
 	skb->protocol = eth_type_trans(skb, dev);
+//该函数对处理后skb>data跳过以太网报头，由mac_header指示以太网报头：
+
+    
 	netif_rx(skb);//将skb交给上层协议
+
+
+    
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += length;
 }
@@ -1151,7 +1159,9 @@ net_send_packet(struct sk_buff *skb, struct net_device *dev)
 	 */
 
 	spin_lock_irqsave(&lp->lock, flags);
-	netif_stop_queue(dev);
+
+    
+	netif_stop_queue(dev);   //通知上层协议不要在发了
 
 	/* initiate a transmit sequence */
 	iowrite16(lp->send_cmd, lp->virt_addr + TX_CMD_PORT);
@@ -1171,6 +1181,8 @@ net_send_packet(struct sk_buff *skb, struct net_device *dev)
 	writewords(lp, TX_FRAME_PORT, skb->data, (skb->len + 1) >> 1);
 	spin_unlock_irqrestore(&lp->lock, flags);
 	dev->stats.tx_bytes += skb->len;
+
+    
 	dev_consume_skb_any(skb);
 
 	/* We DO NOT call netif_wake_queue() here.
@@ -1555,8 +1567,11 @@ cs89x0_probe1(struct net_device *dev, void __iomem *ioaddr, int modular)
 		pr_cont(", programmed I/O");
 
 	/* print the ethernet address. */
-	pr_cont(", MAC %pM\n", dev->dev_addr);   
-    //初始化dev的各种成员变量
+	pr_cont(", MAC %pM\n", dev->dev_addr);  
+
+
+    
+    //初始化dev的各种成员变量   这里非常重要
 	dev->netdev_ops	= &net_ops;
 	dev->watchdog_timeo = HZ;
 
@@ -1758,7 +1773,7 @@ MODULE_LICENSE("GPL");
  * if 10B-2, then agent other than driver will enable DC/DC converter
  * (hw or software util)
  */
-#if 0
+#if 1
 int __init init_module(void)
 {
 	struct net_device *dev = alloc_etherdev(sizeof(struct net_local));

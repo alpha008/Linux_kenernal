@@ -1079,7 +1079,7 @@ int udp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 				   sk->sk_uid);
 
 		security_sk_classify_flow(sk, flowi4_to_flowi(fl4));
-		rt = ip_route_output_flow(net, fl4, sk);
+		rt = ip_route_output_flow(net, fl4, sk);//选择路由
 		if (IS_ERR(rt)) {
 			err = PTR_ERR(rt);
 			rt = NULL;

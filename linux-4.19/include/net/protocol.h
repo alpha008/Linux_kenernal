@@ -41,7 +41,7 @@
 struct net_protocol {
 	int			(*early_demux)(struct sk_buff *skb);
 	int			(*early_demux_handler)(struct sk_buff *skb);
-	int			(*handler)(struct sk_buff *skb);
+	int			(*handler)(struct sk_buff *skb);//具体的协议绑定具体的处理函数
 	void			(*err_handler)(struct sk_buff *skb, u32 info);
 	unsigned int		no_policy:1,
 				netns_ok:1,

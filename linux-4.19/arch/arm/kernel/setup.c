@@ -924,7 +924,7 @@ static int __init customize_machine(void)
 
 	return 0;
 }
-arch_initcall(customize_machine);
+arch_initcall(customize_machine);//1
 
 static int __init init_machine_late(void)
 {
@@ -1078,7 +1078,6 @@ void __init setup_arch(char **cmdline_p)
 				    phys_to_virt(__atags_pointer));
 		dump_machine_table();
 	}
-
 	machine_desc = mdesc;
 	machine_name = mdesc->name;
 	dump_stack_set_arch_desc("%s", mdesc->name);

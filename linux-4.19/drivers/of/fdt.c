@@ -361,9 +361,7 @@ static void reverse_nodes(struct device_node *parent)
  * It returns the size of unflattened device tree or error code
  */
 static int unflatten_dt_nodes(const void *blob,
-			      void *mem,
-			      struct device_node *dad,
-			      struct device_node **nodepp)
+		void *mem,struct device_node *dad,struct device_node **nodepp)
 {
 	struct device_node *root;
 	int offset = 0, depth = 0, initial_depth = 0;
@@ -371,33 +369,19 @@ static int unflatten_dt_nodes(const void *blob,
 	struct device_node *nps[FDT_MAX_DEPTH];
 	void *base = mem;
 	bool dryrun = !base;
-
-	if (nodepp)
-		*nodepp = NULL;
-
-	/*
-	 * We're unflattening device sub-tree if @dad is valid. There are
-	 * possibly multiple nodes in the first level of depth. We need
-	 * set @depth to 1 to make fdt_next_node() happy as it bails
-	 * immediately when negative @depth is found. Otherwise, the device
-	 * nodes except the first one won't be unflattened successfully.
-	 */
+	if (nodepp)*nodepp = NULL;
 	if (dad)
 		depth = initial_depth = 1;
-
 	root = dad;
 	nps[depth] = dad;
-
 	for (offset = 0;
 	     offset >= 0 && depth >= initial_depth;
 	     offset = fdt_next_node(blob, offset, &depth)) {
 		if (WARN_ON_ONCE(depth >= FDT_MAX_DEPTH))
 			continue;
-
 		if (!IS_ENABLED(CONFIG_OF_KOBJ) &&
 		    !of_fdt_device_is_available(blob, offset))
 			continue;
-
 		if (!populate_node(blob, offset, &mem, nps[depth],
 				   &nps[depth+1], dryrun))
 			return mem - base;
@@ -407,19 +391,13 @@ static int unflatten_dt_nodes(const void *blob,
 		if (!dryrun && !root)
 			root = nps[depth+1];
 	}
-
 	if (offset < 0 && offset != -FDT_ERR_NOTFOUND) {
 		pr_err("Error %d processing FDT\n", offset);
 		return -EINVAL;
 	}
-
-	/*
-	 * Reverse the child list. Some drivers assumes node order matches .dts
-	 * node order
-	 */
+	/*Reverse the child list. Some drivers assumes node order matches .dtsnode order*/
 	if (!dryrun)
 		reverse_nodes(root);
-
 	return mem - base;
 }
 
@@ -440,62 +418,37 @@ static int unflatten_dt_nodes(const void *blob,
  * Returns NULL on failure or the memory chunk containing the unflattened
  * device tree on success.
  */
-void *__unflatten_device_tree(const void *blob,
-			      struct device_node *dad,
-			      struct device_node **mynodes,
-			      void *(*dt_alloc)(u64 size, u64 align),
+void *__unflatten_device_tree(const void *blob,struct device_node *dad,
+	struct device_node **mynodes,void *(*dt_alloc)(u64 size, u64 align),
 			      bool detached)
 {
-	int size;
-	void *mem;
-
+	int size;void *mem;
 	pr_debug(" -> unflatten_device_tree()\n");
-
-	if (!blob) {
-		pr_debug("No device tree pointer\n");
-		return NULL;
-	}
-
+	if (!blob) {pr_debug("No device tree pointer\n");return NULL;}
 	pr_debug("Unflattening device tree:\n");
 	pr_debug("magic: %08x\n", fdt_magic(blob));
 	pr_debug("size: %08x\n", fdt_totalsize(blob));
 	pr_debug("version: %08x\n", fdt_version(blob));
-
 	if (fdt_check_header(blob)) {
-		pr_err("Invalid device tree blob header\n");
-		return NULL;
-	}
-
+		pr_err("Invalid device tree blob header\n");return NULL;}
 	/* First pass, scan for size */
 	size = unflatten_dt_nodes(blob, NULL, dad, NULL);
-	if (size < 0)
-		return NULL;
-
+	if (size < 0)  return NULL;
 	size = ALIGN(size, 4);
 	pr_debug("  size is %d, allocating...\n", size);
-
 	/* Allocate memory for the expanded device tree */
 	mem = dt_alloc(size + 4, __alignof__(struct device_node));
-	if (!mem)
-		return NULL;
-
+	if (!mem)  return NULL;
 	memset(mem, 0, size);
-
 	*(__be32 *)(mem + size) = cpu_to_be32(0xdeadbeef);
-
 	pr_debug("  unflattening %p...\n", mem);
-
 	/* Second pass, do actual unflattening */
 	unflatten_dt_nodes(blob, mem, dad, mynodes);
 	if (be32_to_cpup(mem + size) != 0xdeadbeef)
-		pr_warning("End of tree marker overwritten: %08x\n",
-			   be32_to_cpup(mem + size));
-
+       pr_warning("End of tree marker overwritten: %08x\n",be32_to_cpup(mem + size));
 	if (detached && mynodes) {
 		of_node_set_flag(*mynodes, OF_DETACHED);
-		pr_debug("unflattened tree is detached\n");
-	}
-
+		pr_debug("unflattened tree is detached\n");}
 	pr_debug(" <- unflatten_device_tree()\n");
 	return mem;
 }

@@ -1448,7 +1448,7 @@ int ip_send_skb(struct net *net, struct sk_buff *skb)
 
 	return err;
 }
-
+//ip协议入口
 int ip_push_pending_frames(struct sock *sk, struct flowi4 *fl4)
 {
 	struct sk_buff *skb;

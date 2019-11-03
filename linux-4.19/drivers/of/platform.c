@@ -349,58 +349,35 @@ static const struct of_dev_auxdata *of_dev_lookup(const struct of_dev_auxdata *l
  * Creates a platform_device for the provided device_node, and optionally
  * recursively create devices for all the child nodes.
  */
-static int of_platform_bus_create(struct device_node *bus,
-				  const struct of_device_id *matches,
-				  const struct of_dev_auxdata *lookup,
-				  struct device *parent, bool strict)
+static int of_platform_bus_create(struct device_node *bus,const struct of_device_id *matches,
+	const struct of_dev_auxdata *lookup,struct device *parent, bool strict)
 {
-	const struct of_dev_auxdata *auxdata;
-	struct device_node *child;
-	struct platform_device *dev;
-	const char *bus_id = NULL;
-	void *platform_data = NULL;
-	int rc = 0;
-
-	/* Make sure it has a compatible property */
+	const struct of_dev_auxdata *auxdata;struct device_node *child;
+	struct platform_device *dev;const char *bus_id = NULL;
+	void *platform_data = NULL;int rc = 0;
+	/*只有包含"compatible"属性的node节点才会生成相应的platform_device结构体 */
 	if (strict && (!of_get_property(bus, "compatible", NULL))) {
-		pr_debug("%s() - skipping %pOF, no compatible prop\n",
-			 __func__, bus);
-		return 0;
-	}
-
+		pr_debug("%s() - skipping %pOF, no compatible prop\n", __func__, bus);return 0;}
 	/* Skip nodes for which we don't want to create devices */
 	if (unlikely(of_match_node(of_skipped_node_table, bus))) {
-		pr_debug("%s() - skipping %pOF node\n", __func__, bus);
-		return 0;
-	}
-
+		pr_debug("%s() - skipping %pOF node\n", __func__, bus);return 0;}
 	if (of_node_check_flag(bus, OF_POPULATED_BUS)) {
-		pr_debug("%s() - skipping %pOF, already populated\n",
-			__func__, bus);
-		return 0;
-	}
-
+		pr_debug("%s() - skipping %pOF, already populated\n",__func__, bus);return 0;}
 	auxdata = of_dev_lookup(lookup, bus);
 	if (auxdata) {
 		bus_id = auxdata->name;
-		platform_data = auxdata->platform_data;
-	}
-
+		platform_data = auxdata->platform_data;}
 	if (of_device_is_compatible(bus, "arm,primecell")) {
-		/*
-		 * Don't return an error here to keep compatibility with older
-		 * device tree files.
-		 */
-		of_amba_device_create(bus, bus_id, platform_data, parent);
-		return 0;
-	}
-
+		of_amba_device_create(bus, bus_id, platform_data, parent);return 0;
+	}/*Don't return an error here to keep compatibility with older device tree files.*/
+    /* 针对节点下面得到status = "ok" 或者status = "okay"或者不存在status属性的
+    * 节点分配内存并填充platform_device结构体 */
 	dev = of_platform_device_create_pdata(bus, bus_id, platform_data, parent);
 	if (!dev || !of_match_node(matches, bus))
 		return 0;
-
+      /*递归调用节点解析函数，为子节点继续生成platform_device结构体，前提是父节点
+      * 的“compatible” = “simple-bus”，也就是匹配of_default_bus_match_table结构体中的数据*/
 	for_each_child_of_node(bus, child) {
-		pr_debug("   create child: %pOF\n", child);
 		rc = of_platform_bus_create(child, matches, lookup, &dev->dev, strict);
 		if (rc) {
 			of_node_put(child);
@@ -478,14 +455,13 @@ int of_platform_populate(struct device_node *root,
 {
 	struct device_node *child;
 	int rc = 0;
-
+    /*  获取根节点 */
 	root = root ? of_node_get(root) : of_find_node_by_path("/");
 	if (!root)
 		return -EINVAL;
-
 	pr_debug("%s()\n", __func__);
 	pr_debug(" starting at: %pOF\n", root);
-
+     /*  为根节点下面的每一个节点创建platform_device结构体 */
 	for_each_child_of_node(root, child) {
 		rc = of_platform_bus_create(child, matches, lookup, parent, true);
 		if (rc) {
@@ -493,8 +469,8 @@ int of_platform_populate(struct device_node *root,
 			break;
 		}
 	}
+    /*  更新device_node flag标志位 */
 	of_node_set_flag(root, OF_POPULATED_BUS);
-
 	of_node_put(root);
 	return rc;
 }

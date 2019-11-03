@@ -212,7 +212,7 @@ static int ip_local_deliver_finish(struct net *net, struct sock *sk, struct sk_b
 				}
 				nf_reset(skb);
 			}
-			ret = ipprot->handler(skb);
+			ret = ipprot->handler(skb);//找到对应的协议的处理函数
 			if (ret < 0) {
 				protocol = -ret;
 				goto resubmit;
@@ -512,6 +512,13 @@ out:
 
 /*
  * IP receive entry point
+ static inline int
+ NF_HOOK(uint8_t pf, unsigned int hook, struct net *net, struct sock *sk,
+     struct sk_buff *skb, struct net_device *in, struct net_device *out,
+     int (*okfn)(struct net *, struct sock *, struct sk_buff *))
+ {
+     return okfn(net, sk, skb);
+ }
  */
 int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 	   struct net_device *orig_dev)

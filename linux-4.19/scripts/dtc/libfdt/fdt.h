@@ -62,13 +62,10 @@ struct fdt_header {
 	fdt32_t off_mem_rsvmap;		 /* offset to memory reserve map */
 	fdt32_t version;		 /* format version */
 	fdt32_t last_comp_version;	 /* last compatible version */
-
 	/* version 2 fields below */
-	fdt32_t boot_cpuid_phys;	 /* Which physical CPU id we're
-					    booting on */
+	fdt32_t boot_cpuid_phys;	 /* Which physical CPU id we're  booting on */
 	/* version 3 fields below */
 	fdt32_t size_dt_strings;	 /* size of the strings block */
-
 	/* version 17 fields below */
 	fdt32_t size_dt_struct;		 /* size of the structure block */
 };

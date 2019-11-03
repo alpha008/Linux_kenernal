@@ -49,21 +49,21 @@ struct of_irq_controller;
 #endif
 
 struct device_node {
-	const char *name;
-	const char *type;
-	phandle phandle;
-	const char *full_name;
+	const char *name;  /* node的名称，取最后一次“/”和“@”之间子串 */
+	const char *type; /* device_type的属性名称，没有为<NULL> */
+	phandle phandle;   /* phandle属性值 */
+	const char *full_name; /* 指向该结构体结束的位置，存放node的路径全名，例如：/chosen */
 	struct fwnode_handle fwnode;
 
-	struct	property *properties;
+	struct	property *properties;/* 指向该节点下的第一个属性，其他属性与该属性链表相接 */
 	struct	property *deadprops;	/* removed properties */
-	struct	device_node *parent;
-	struct	device_node *child;
-	struct	device_node *sibling;
+	struct	device_node *parent; /* 父节点 */
+	struct	device_node *child; /* 子节点 */
+	struct	device_node *sibling;  /* 姊妹节点，与自己同等级的node */
 #if defined(CONFIG_OF_KOBJ)
-	struct	kobject kobj;
+	struct	kobject kobj;  /* sysfs文件系统目录体现 */
 #endif
-	unsigned long _flags;
+	unsigned long _flags;  /* 当前node状态标志位，见/include/linux/of.h line124-127 */
 	void	*data;
 #if defined(CONFIG_SPARC)
 	const char *path_component_name;
