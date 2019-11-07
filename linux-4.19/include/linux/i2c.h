@@ -694,6 +694,8 @@ struct i2c_adapter {
 
 	struct irq_domain *host_notify_domain;
 };
+
+
 #define to_i2c_adapter(d) container_of(d, struct i2c_adapter, dev)
 
 static inline void *i2c_get_adapdata(const struct i2c_adapter *dev)

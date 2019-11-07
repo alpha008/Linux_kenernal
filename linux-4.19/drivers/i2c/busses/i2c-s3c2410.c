@@ -1211,7 +1211,11 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 
 	pm_runtime_enable(&pdev->dev);
 
+    //ic2_add_adapter  一般用于CPU外接
+
 	ret = i2c_add_numbered_adapter(&i2c->adap);
+    //CPU内部控制器注册
+    
 	if (ret < 0) {
 		pm_runtime_disable(&pdev->dev);
 		s3c24xx_i2c_deregister_cpufreq(i2c);
@@ -1283,7 +1287,7 @@ static const struct dev_pm_ops s3c24xx_i2c_dev_pm_ops = {
 #else
 #define S3C24XX_DEV_PM_OPS NULL
 #endif
-
+  
 static struct platform_driver s3c24xx_i2c_driver = {
 	.probe		= s3c24xx_i2c_probe,
 	.remove		= s3c24xx_i2c_remove,
@@ -1296,7 +1300,7 @@ static struct platform_driver s3c24xx_i2c_driver = {
 };
 
 static int __init i2c_adap_s3c_init(void)
-{
+{  
 	return platform_driver_register(&s3c24xx_i2c_driver);
 }
 subsys_initcall(i2c_adap_s3c_init);

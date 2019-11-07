@@ -629,14 +629,14 @@ struct phy_device *get_phy_device(struct mii_bus *bus, int addr, bool is_c45)
 	int r;
 
 	r = get_phy_id(bus, addr, &phy_id, is_c45, &c45_ids);
-	if (r)
+	if (r)  
 		return ERR_PTR(r);
 
 	/* If the phy_id is mostly Fs, there is no device there */
 	if ((phy_id & 0x1fffffff) == 0x1fffffff)
 		return ERR_PTR(-ENODEV);
 
-	return phy_device_create(bus, addr, phy_id, is_c45, &c45_ids);
+	return phy_device_create(bus, addr, phy_id, is_c45, &c45_ids); 
 }
 EXPORT_SYMBOL(get_phy_device);
 

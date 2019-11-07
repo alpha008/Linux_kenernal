@@ -197,7 +197,7 @@ static bool of_mdiobus_child_is_phy(struct device_node *child)
  *
  * This function registers the mii_bus structure and registers a phy_device
  * for each child node of @np.
- */
+ */  
 int of_mdiobus_register(struct mii_bus *mdio, struct device_node *np)
 {
 	struct device_node *child;

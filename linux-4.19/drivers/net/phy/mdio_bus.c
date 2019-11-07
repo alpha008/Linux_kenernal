@@ -408,7 +408,7 @@ int __mdiobus_register(struct mii_bus *bus, struct module *owner)
 		if ((bus->phy_mask & (1 << i)) == 0) {
 			struct phy_device *phydev;
 
-			phydev = mdiobus_scan(bus, i);
+			phydev = mdiobus_scan(bus, i);  
 			if (IS_ERR(phydev) && (PTR_ERR(phydev) != -ENODEV)) {
 				err = PTR_ERR(phydev);
 				goto error;
@@ -519,7 +519,7 @@ struct phy_device *mdiobus_scan(struct mii_bus *bus, int addr)
 	 */
 	of_mdiobus_link_mdiodev(bus, &phydev->mdio);
 
-	err = phy_device_register(phydev);
+	err = phy_device_register(phydev);  
 	if (err) {
 		phy_device_free(phydev);
 		return ERR_PTR(-ENODEV);
