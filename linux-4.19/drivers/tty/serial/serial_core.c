@@ -1704,7 +1704,7 @@ static int uart_open(struct tty_struct *tty, struct file *filp)
 	int retval, line = tty->index;
 	struct uart_state *state = drv->state + line;
 
-	tty->driver_data = state;
+	tty->driver_data = state;//这里进行存放
 
 	retval = tty_port_open(&state->port, tty, filp);
 	if (retval > 0)

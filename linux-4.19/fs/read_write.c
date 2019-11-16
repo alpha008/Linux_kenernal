@@ -411,7 +411,7 @@ static ssize_t new_sync_read(struct file *filp, char __user *buf, size_t len, lo
 
 ssize_t __vfs_read(struct file *file, char __user *buf, size_t count,
 		   loff_t *pos)
-{
+{                 //   根据      file ---------------->f_op
 	if (file->f_op->read)//这个指针是重点中的重点，进行的绑定调用就是这个
 		return file->f_op->read(file, buf, count, pos);
 	else if (file->f_op->read_iter)
@@ -433,11 +433,10 @@ ssize_t kernel_read(struct file *file, void *buf, size_t count, loff_t *pos)
 	return result;
 }
 EXPORT_SYMBOL(kernel_read);
-
+//   根据  fd--->file --->f_op
 ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
-{
+{               //   根据      file  ---------------------------------- --->f_op                    
 	ssize_t ret;
-
 	if (!(file->f_mode & FMODE_READ))
 		return -EBADF;
 	if (!(file->f_mode & FMODE_CAN_READ))
@@ -449,6 +448,7 @@ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 	if (!ret) {
 		if (count > MAX_RW_COUNT)
 			count =  MAX_RW_COUNT;
+        //   根据      file ---------------->f_op
 		ret = __vfs_read(file, buf, count, pos);
 		if (ret > 0) {
 			fsnotify_access(file);
@@ -570,11 +570,22 @@ static inline void file_pos_write(struct file *file, loff_t pos)
 
 ssize_t ksys_read(unsigned int fd, char __user *buf, size_t count)
 {
-	struct fd f = fdget_pos(fd);
+/*
+struct fd {
+	struct file *file;//往下传递
+	unsigned int flags;
+};
+struct file {
+	struct inode		*f_inode;	
+	const struct file_operations	*f_op;
+}
+*///   根据  fd--->file --->f_op
+	struct fd f = fdget_pos(fd);//根据传递来的fd，获得struct file *file;
 	ssize_t ret = -EBADF;
 
 	if (f.file) {
-		loff_t pos = file_pos_read(f.file);
+		loff_t pos = file_pos_read(f.file);//根据传递来的struct file *file，然后去获得对应的操作集合
+//  ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 		ret = vfs_read(f.file, buf, count, &pos);
 		if (ret >= 0)
 			file_pos_write(f.file, pos);

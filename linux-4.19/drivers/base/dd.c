@@ -867,21 +867,10 @@ static int __driver_attach(struct device *dev, void *data)  //genphy_10g_driver 
 {//dev = null（设备--未知）                   genphy_10g_driver--驱动
 	struct device_driver *drv = data;     //genphy_10g_driver
 	int ret;
-
-	/*
-	 * Lock device and try to bind to it. We drop the error
-	 * here and always return 0, because we need to keep trying
-	 * to bind to devices and some drivers will return an error
-	 * simply if it didn't support the device.
-	 *
-	 * driver_probe_device() will spit a warning if there
-	 * is an error.
-	 */
                              //genphy_10g_driver
 	ret = driver_match_device(drv, dev);  //当匹配成功后
 	if (ret == 0) {
-		/* no match */
-		return 0;
+		return 0;/* no match */
 	} else if (ret == -EPROBE_DEFER) {
 		dev_dbg(dev, "Device match requests probe deferral\n");
 		driver_deferred_probe_add(dev);
@@ -898,7 +887,6 @@ static int __driver_attach(struct device *dev, void *data)  //genphy_10g_driver 
 	device_unlock(dev);
 	if (dev->parent && dev->bus->need_parent_lock)
 		device_unlock(dev->parent);
-
 	return 0;
 }
 

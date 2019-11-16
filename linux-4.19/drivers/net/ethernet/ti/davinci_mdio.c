@@ -534,11 +534,10 @@ static struct platform_driver davinci_mdio_driver = {
 		.name	 = "davinci_mdio",
 		.pm	 = &davinci_mdio_pm_ops,
 		.of_match_table = of_match_ptr(davinci_mdio_of_mtable),
-	},
+	},//上面这个是设备树中的匹配规则
 	.probe = davinci_mdio_probe,
 	.remove = davinci_mdio_remove,
 };
-//Mdio设备注册到总线
 static int __init davinci_mdio_init(void)
 {
 	return platform_driver_register(&davinci_mdio_driver);

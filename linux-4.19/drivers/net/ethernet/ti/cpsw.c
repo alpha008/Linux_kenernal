@@ -3723,7 +3723,7 @@ static struct platform_driver cpsw_driver = {
 
 module_platform_driver(cpsw_driver);
 //下面为宏展开
-int __platform_driver_register(struct platform_driver *drv, struct module *owner)
+//int __platform_driver_register(struct platform_driver *drv, struct module *owner)
 
 static int __init cpsw_driver_init(void)
 { 

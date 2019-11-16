@@ -24,10 +24,10 @@
 #include <linux/export.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
-#include <linux/syscalls.h>
+#include <linux/syscalls.h> ///6666
 
 #include <asm/cpufeature.h>
-#include <asm/syscall.h>
+#include <asm/syscall.h>  ///6666
 
 SYSCALL_DEFINE6(mmap, unsigned long, addr, unsigned long, len,
 		unsigned long, prot, unsigned long, flags,
@@ -66,3 +66,5 @@ const syscall_fn_t sys_call_table[__NR_syscalls] = {
 	[0 ... __NR_syscalls - 1] = (syscall_fn_t)sys_ni_syscall,
 #include <asm/unistd.h>
 };
+
+

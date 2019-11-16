@@ -527,14 +527,12 @@ int bsg_scsi_register_queue(struct request_queue *q, struct device *parent)
 	return bsg_register_queue(q, parent, dev_name(parent), &bsg_scsi_ops);
 }
 EXPORT_SYMBOL_GPL(bsg_scsi_register_queue);
-
-static struct cdev bsg_cdev;
-
 static char *bsg_devnode(struct device *dev, umode_t *mode)
 {
 	return kasprintf(GFP_KERNEL, "bsg/%s", dev_name(dev));
 }
 
+static struct cdev bsg_cdev;
 static int __init bsg_init(void)
 {
 	int ret, i;

@@ -303,14 +303,12 @@ int bus_for_each_dev(struct bus_type *bus, struct device *start,void *data, int 
 	struct klist_iter i;
 	struct device *dev;
 	int error = 0;
-
 	if (!bus || !bus->p)
 		return -EINVAL;
-
 	klist_iter_init_node(&bus->p->klist_devices, &i,(start ? &start->p->knode_bus : NULL));
 	while (!error && (dev = next_device(&i)))
    //error = __driver_attach(dev, genphy_10g_driver);//dev = null（设备--未知）      genphy_10g_driver--驱动
-		error = fn(dev, data);//dev = null（设备--未知）      genphy_10g_driver--驱动
+		error = fn(dev, data);//这里在设备列表中找到的设备                 //dev = null（设备--未知）      genphy_10g_driver--驱动
 	klist_iter_exit(&i);// null genphy_10g_driver
 	return error;
 }
