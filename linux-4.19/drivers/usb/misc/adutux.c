@@ -728,7 +728,7 @@ static int adu_probe(struct usb_interface *interface,
 	dev_dbg(&interface->dev,"serial_number=%s", dev->serial_number);
 
 	/* we can register the device now, as it is ready */
-	usb_set_intfdata(interface, dev);
+	usb_set_intfdata(interface, dev);//  
 
 	retval = usb_register_dev(interface, &adu_class);
 
