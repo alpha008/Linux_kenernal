@@ -1061,7 +1061,7 @@ void __init hyp_mode_check(void)
 #endif
 }
 
-void __init setup_arch(char **cmdline_p)
+void __init setup_arch(char **cmdline_p)//传参
 {
 	const struct machine_desc *mdesc;
 
@@ -1122,7 +1122,7 @@ void __init setup_arch(char **cmdline_p)
 	if (mdesc->restart)
 		arm_pm_restart = mdesc->restart;
 
-	unflatten_device_tree();
+	unflatten_device_tree();//解析
 
 	arm_dt_init_cpu_maps();
 	psci_dt_init();

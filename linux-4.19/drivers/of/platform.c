@@ -169,6 +169,7 @@ EXPORT_SYMBOL(of_device_alloc);
  * Returns pointer to created platform device, or NULL if a device was not
  * registered.  Unavailable devices will not get registered.
  */
+ //这里具体创建设备
 static struct platform_device *of_platform_device_create_pdata(
 					struct device_node *np,
 					const char *bus_id,
@@ -347,14 +348,17 @@ static const struct of_dev_auxdata *of_dev_lookup(const struct of_dev_auxdata *l
  * @strict: require compatible property
  *
  * Creates a platform_device for the provided device_node, and optionally
- * recursively create devices for all the child nodes.
+ * recursively create devices for all the child nodes.  
  */
 static int of_platform_bus_create(struct device_node *bus,const struct of_device_id *matches,
 	const struct of_dev_auxdata *lookup,struct device *parent, bool strict)
 {
-	const struct of_dev_auxdata *auxdata;struct device_node *child;
-	struct platform_device *dev;const char *bus_id = NULL;
-	void *platform_data = NULL;int rc = 0;
+	const struct of_dev_auxdata *auxdata;
+    struct device_node *child;
+	struct platform_device *dev;//这里创建的平台设备
+    const char *bus_id = NULL;
+	void *platform_data = NULL;
+    int rc = 0;
 	/*只有包含"compatible"属性的node节点才会生成相应的platform_device结构体 */
 	if (strict && (!of_get_property(bus, "compatible", NULL))) {
 		pr_debug("%s() - skipping %pOF, no compatible prop\n", __func__, bus);return 0;}
@@ -366,12 +370,15 @@ static int of_platform_bus_create(struct device_node *bus,const struct of_device
 	auxdata = of_dev_lookup(lookup, bus);
 	if (auxdata) {
 		bus_id = auxdata->name;
-		platform_data = auxdata->platform_data;}
+		platform_data = auxdata->platform_data;
+    }
 	if (of_device_is_compatible(bus, "arm,primecell")) {
-		of_amba_device_create(bus, bus_id, platform_data, parent);return 0;
-	}/*Don't return an error here to keep compatibility with older device tree files.*/
+		of_amba_device_create(bus, bus_id, platform_data, parent);
+        return 0;
+	}
+    /*Don't return an error here to keep compatibility with older device tree files.*/
     /* 针对节点下面得到status = "ok" 或者status = "okay"或者不存在status属性的
-    * 节点分配内存并填充platform_device结构体 */
+                           * 节点分配内存并填充platform_device结构体 */
 	dev = of_platform_device_create_pdata(bus, bus_id, platform_data, parent);
 	if (!dev || !of_match_node(matches, bus))
 		return 0;
@@ -448,7 +455,7 @@ EXPORT_SYMBOL(of_platform_bus_probe);
  *
  * Returns 0 on success, < 0 on failure.
  */
-int of_platform_populate(struct device_node *root,
+int of_platform_populate(struct device_node *root,//设备创建
 			const struct of_device_id *matches,
 			const struct of_dev_auxdata *lookup,
 			struct device *parent)
@@ -462,7 +469,7 @@ int of_platform_populate(struct device_node *root,
 	pr_debug("%s()\n", __func__);
 	pr_debug(" starting at: %pOF\n", root);
      /*  为根节点下面的每一个节点创建platform_device结构体 */
-	for_each_child_of_node(root, child) {
+	for_each_child_of_node(root, child) {   //创建过程
 		rc = of_platform_bus_create(child, matches, lookup, parent, true);
 		if (rc) {
 			of_node_put(child);

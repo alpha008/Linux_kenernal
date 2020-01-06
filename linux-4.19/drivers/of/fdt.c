@@ -417,6 +417,9 @@ static int unflatten_dt_nodes(const void *blob,
  *
  * Returns NULL on failure or the memory chunk containing the unflattened
  * device tree on success.
+ 参数initial_boot_params指向Device Tree在内存中的首地址，of_root在经过该函数处理之后，会指向根节点
+ ，early_init_dt_alloc_memory_arch是一个函数指针，
+ 为struct device_node和struct property结构体分配内存的回调函数（callback）。
  */
 void *__unflatten_device_tree(const void *blob,struct device_node *dad,
 	struct device_node **mynodes,void *(*dt_alloc)(u64 size, u64 align),
@@ -1204,12 +1207,12 @@ bool __init early_init_dt_scan(void *params)
  * pointers of the nodes so the normal device-tree walking functions
  * can be used.
  /*
-      * 遍历设备树中每一个node节点，然后构造device_node结构体，并生成其树状关系，
-      * 根节点存在struct device_node of_root参数中。
+* 遍历设备树中每一个node节点，然后构造device_node结构体，并生成其树状关系，
+* 根节点存在struct device_node of_root参数中。
  */
 void __init unflatten_device_tree(void)
 {
-	__unflatten_device_tree(initial_boot_params, NULL, &of_root,
+	__unflatten_device_tree(initial_boot_params, NULL, &of_root,//在深入一层
 				early_init_dt_alloc_memory_arch, false);
 
 	/* Get pointer to "/chosen" and "/aliases" nodes for use everywhere */

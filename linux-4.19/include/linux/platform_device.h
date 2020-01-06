@@ -211,7 +211,7 @@ static inline void *platform_get_drvdata(const struct platform_device *pdev)
 {
 	return dev_get_drvdata(&pdev->dev);
 }
-
+//	platform_set_drvdata(pdev, ndev);
 static inline void platform_set_drvdata(struct platform_device *pdev,
 					void *data)
 {

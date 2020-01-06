@@ -673,8 +673,7 @@ static inline void *devm_kzalloc(struct device *dev, size_t size, gfp_t gfp)
 {
 	return devm_kmalloc(dev, size, gfp | __GFP_ZERO);
 }
-static inline void *devm_kmalloc_array(struct device *dev,
-				       size_t n, size_t size, gfp_t flags)
+static inline void *devm_kmalloc_array(struct device *dev,size_t n, size_t size, gfp_t flags)
 {
 	size_t bytes;
 
@@ -683,8 +682,7 @@ static inline void *devm_kmalloc_array(struct device *dev,
 
 	return devm_kmalloc(dev, bytes, flags);
 }
-static inline void *devm_kcalloc(struct device *dev,
-				 size_t n, size_t size, gfp_t flags)
+static inline void *devm_kcalloc(struct device *dev,size_t n, size_t size, gfp_t flags)
 {
 	return devm_kmalloc_array(dev, n, size, flags | __GFP_ZERO);
 }
@@ -1067,7 +1065,7 @@ static inline void *dev_get_drvdata(const struct device *dev)
 {
 	return dev->driver_data;
 }
-
+//  platform_set_drvdata(pdev, ndev);
 static inline void dev_set_drvdata(struct device *dev, void *data)
 {
 	dev->driver_data = data;

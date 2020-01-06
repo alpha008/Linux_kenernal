@@ -397,14 +397,9 @@ struct phy_c45_device_ids {
  * handling, as well as handling shifts in PHY hardware state
  */
 struct phy_device {
-	struct mdio_device mdio;
-
-	/* Information about the PHY type */
-	/* And management functions */
-	struct phy_driver *drv;
-
+	struct mdio_device mdio;/* Information about the PHY type */
+	struct phy_driver *drv;/* And management functions */
 	u32 phy_id;
-
 	struct phy_c45_device_ids c45_ids;
 	unsigned is_c45:1;
 	unsigned is_internal:1;
@@ -413,70 +408,37 @@ struct phy_device {
 	unsigned suspended:1;
 	unsigned sysfs_links:1;
 	unsigned loopback_enabled:1;
-
 	unsigned autoneg:1;
-	/* The most recently read link state */
-	unsigned link:1;
-
+	unsigned link:1;/* The most recently read link state */
 	enum phy_state state;
-
 	u32 dev_flags;
-
 	phy_interface_t interface;
-
-	/*
-	 * forced speed & duplex (no autoneg)
-	 * partner speed & duplex & pause (autoneg)
-	 */
-	int speed;
-	int duplex;
+	int speed;//forced speed & duplex (no autoneg)
+	int duplex;//partner speed & duplex & pause (autoneg)
 	int pause;
-	int asym_pause;
-
-	/* Enabled Interrupts */
-	u32 interrupts;
-
-	/* Union of PHY and Attached devices' supported modes */
-	/* See mii.h for more info */
-	u32 supported;
-	u32 advertising;
+	int asym_pause;	
+	u32 interrupts;/* Enabled Interrupts */
+	u32 supported;/* See mii.h for more info */
+	u32 advertising;/* Union of PHY and Attached devices' supported modes */
 	u32 lp_advertising;
-
-	/* Energy efficient ethernet modes which should be prohibited */
 	u32 eee_broken_modes;
-
-	int link_timeout;
-
+	int link_timeout;/* Energy efficient ethernet modes which should be prohibited */
 #ifdef CONFIG_LED_TRIGGER_PHY
 	struct phy_led_trigger *phy_led_triggers;
 	unsigned int phy_num_led_triggers;
 	struct phy_led_trigger *last_triggered;
-
 	struct phy_led_trigger *led_link_trigger;
 #endif
-
-	/*
-	 * Interrupt number for this PHY
-	 * -1 means no interrupt
-	 */
-	int irq;
-
-	/* private data pointer */
+	int irq;//Interrupt number for this PHY  -1 means no interrupt
 	/* For use by PHYs to maintain extra state */
-	void *priv;
-
-	/* Interrupt and Polling infrastructure */
-	struct work_struct phy_queue;
+	void *priv;/* Interrupt and Polling infrastructure */
+	struct work_struct phy_queue;/* private data pointer */
 	struct delayed_work state_queue;
-
 	struct mutex lock;
-
 	struct phylink *phylink;
 	struct net_device *attached_dev;
-
 	u8 mdix;
 	u8 mdix_ctrl;
-
 	void (*phy_link_change)(struct phy_device *, bool up, bool do_carrier);
 	void (*adjust_link)(struct net_device *dev);
 };

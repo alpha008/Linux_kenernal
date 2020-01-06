@@ -1853,34 +1853,27 @@ static int cpsw_ndo_open(struct net_device *ndev)
 	struct cpsw_common *cpsw = priv->cpsw;
 	int ret;
 	u32 reg;
-
 	ret = pm_runtime_get_sync(cpsw->dev);
 	if (ret < 0) {
 		pm_runtime_put_noidle(cpsw->dev);
 		return ret;
 	}
-
 	netif_carrier_off(ndev);
-
 	/* Notify the stack of the actual queue counts. */
 	ret = netif_set_real_num_tx_queues(ndev, cpsw->tx_ch_num);
 	if (ret) {
 		dev_err(priv->dev, "cannot set real number of tx queues\n");
 		goto err_cleanup;
 	}
-
 	ret = netif_set_real_num_rx_queues(ndev, cpsw->rx_ch_num);
 	if (ret) {
 		dev_err(priv->dev, "cannot set real number of rx queues\n");
 		goto err_cleanup;
 	}
-
 	reg = cpsw->version;
-
 	dev_info(priv->dev, "initializing cpsw version %d.%d (%d)\n",
 		 CPSW_MAJOR_VERSION(reg), CPSW_MINOR_VERSION(reg),
 		 CPSW_RTL_VERSION(reg));
-
 	/* Initialize host and slave ports */
 	if (!cpsw->usage_count)
 		cpsw_init_host_port(priv);
@@ -1892,26 +1885,20 @@ static int cpsw_ndo_open(struct net_device *ndev)
 	else
 		cpsw_ale_add_vlan(cpsw->ale, cpsw->data.default_vlan,
 				  ALE_ALL_PORTS, ALE_ALL_PORTS, 0, 0);
-
 	/* initialize shared resources for every ndev */
 	if (!cpsw->usage_count) {
 		/* disable priority elevation */
 		writel_relaxed(0, &cpsw->regs->ptype);
-
 		/* enable statistics collection only on all ports */
 		writel_relaxed(0x7, &cpsw->regs->stat_port_en);
-
 		/* Enable internal fifo flow control */
 		writel(0x7, &cpsw->regs->flow_control);
-
 		napi_enable(&cpsw->napi_rx);
 		napi_enable(&cpsw->napi_tx);
-
 		if (cpsw->tx_irq_disabled) {
 			cpsw->tx_irq_disabled = false;
 			enable_irq(cpsw->irqs_table[1]);
 		}
-
 		if (cpsw->rx_irq_disabled) {
 			cpsw->rx_irq_disabled = false;
 			enable_irq(cpsw->irqs_table[0]);
@@ -2530,6 +2517,7 @@ static int cpsw_ndo_setup_tc(struct net_device *ndev, enum tc_setup_type type,
 		return -EOPNOTSUPP;
 	}
 }
+                 
 //自动协商开始的地方
 static const struct net_device_ops cpsw_netdev_ops = {
 	.ndo_open		= cpsw_ndo_open,//当执行ifconfig    up时间会执行里面的cpsw_ndo_open
@@ -3059,64 +3047,54 @@ static void cpsw_slave_init(struct cpsw_slave *slave, struct cpsw_common *cpsw,
 	slave->sliver	= regs + sliver_reg_ofs;
 	slave->port_vlan = data->dual_emac_res_vlan;
 }
-
+//将DT中的device_node取出，然后求出其成员，并将其赋值给cpsw_platform_data                      data 
 static int cpsw_probe_dt(struct cpsw_platform_data *data,
 			 struct platform_device *pdev)
 {
-	struct device_node *node = pdev->dev.of_node;
+	struct device_node *node = pdev->dev.of_node;//将device_node的成员求出，挨个赋值给data
 	struct device_node *slave_node;
 	int i = 0, ret;
 	u32 prop;
-
 	if (!node)
 		return -EINVAL;
-
 	if (of_property_read_u32(node, "slaves", &prop)) {
 		dev_err(&pdev->dev, "Missing slaves property in the DT.\n");
 		return -EINVAL;
 	}
 	data->slaves = prop;
-
 	if (of_property_read_u32(node, "active_slave", &prop)) {
 		dev_err(&pdev->dev, "Missing active_slave property in the DT.\n");
 		return -EINVAL;
 	}
 	data->active_slave = prop;
-
 	data->slave_data = devm_kcalloc(&pdev->dev,
 					data->slaves,
 					sizeof(struct cpsw_slave_data),
 					GFP_KERNEL);
 	if (!data->slave_data)
 		return -ENOMEM;
-
 	if (of_property_read_u32(node, "cpdma_channels", &prop)) {
 		dev_err(&pdev->dev, "Missing cpdma_channels property in the DT.\n");
 		return -EINVAL;
 	}
 	data->channels = prop;
-
 	if (of_property_read_u32(node, "ale_entries", &prop)) {
 		dev_err(&pdev->dev, "Missing ale_entries property in the DT.\n");
 		return -EINVAL;
 	}
 	data->ale_entries = prop;
-
 	if (of_property_read_u32(node, "bd_ram_size", &prop)) {
 		dev_err(&pdev->dev, "Missing bd_ram_size property in the DT.\n");
 		return -EINVAL;
 	}
 	data->bd_ram_size = prop;
-
 	if (of_property_read_u32(node, "mac_control", &prop)) {
 		dev_err(&pdev->dev, "Missing mac_control property in the DT.\n");
 		return -EINVAL;
 	}
 	data->mac_control = prop;
-
 	if (of_property_read_bool(node, "dual_emac"))
 		data->dual_emac = 1;
-
 	/*
 	 * Populate all the child nodes here...
 	 */
@@ -3308,13 +3286,19 @@ static const struct soc_device_attribute cpsw_soc_devices[] = {
 	{ .family = "AM33xx", .revision = "ES1.0"},
 	{ /* sentinel */ }
 };
-
+/*
+struct cpsw_priv {
+	struct net_device		*ndev;
+	struct device			*dev;
+	struct cpsw_common *cpsw;
+};
+*/
 static int cpsw_probe(struct platform_device *pdev)
 {
 	struct clk			*clk;
-	struct cpsw_platform_data	*data;
+	struct cpsw_platform_data	*data;//设备树获取配置并将其赋值给  cpsw_platform_data->data
+    struct cpsw_priv		*priv;
 	struct net_device		*ndev;
-	struct cpsw_priv		*priv;
 	struct cpdma_params		dma_params;
 	struct cpsw_ale_params		ale_params;
 	void __iomem			*ss_regs;
@@ -3325,107 +3309,75 @@ static int cpsw_probe(struct platform_device *pdev)
 	const struct soc_device_attribute *soc;
 	struct cpsw_common		*cpsw;
 	int ret = 0, i, ch;
-	int irq;
-//cpsw_common  内部嵌套了device
+	int irq;                              //cpsw_common  内部嵌套了device
 	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
-	if (!cpsw)
-		return -ENOMEM;
-
-	cpsw->dev = &pdev->dev;
-
-	ndev = alloc_etherdev_mq(sizeof(struct cpsw_priv), CPSW_MAX_QUEUES);
-	if (!ndev) {
-		dev_err(&pdev->dev, "error allocating net_device\n");
-		return -ENOMEM;
-	}
-
-	platform_set_drvdata(pdev, ndev);
-	priv = netdev_priv(ndev);
-	priv->cpsw = cpsw;
-	priv->ndev = ndev;//pri 赋值
-	priv->dev  = &ndev->dev;
+	cpsw->dev = &pdev->dev;    //平台设备中嵌套dev
+	ndev = alloc_etherdev_mq(sizeof(struct cpsw_priv), CPSW_MAX_QUEUES);//传入priv，创建priv+ndev大小空间
+	platform_set_drvdata(pdev, ndev);     //将申请到的ndev赋值给pdev(平台设备)内的dev	
+	priv = netdev_priv(ndev);  //根据ndev的地址求出priv的起始地址
+	priv->cpsw = cpsw;        //将分配的cpsw空间赋值给priv.cpsw
+	priv->ndev = ndev;        //将分配的ndev空间赋值给priv.ndev
+	priv->dev  = &ndev->dev;  //将分配的ndev空间赋值给priv.dev
+	
 	priv->msg_enable = netif_msg_init(debug_level, CPSW_DEBUG);
-	cpsw->rx_packet_max = max(rx_packet_max, 128);
-
+    
+	cpsw->rx_packet_max = max(rx_packet_max, 128);//接收包最大为多少
+	
 	mode = devm_gpiod_get_array_optional(&pdev->dev, "mode", GPIOD_OUT_LOW);
-	if (IS_ERR(mode)) {
-		ret = PTR_ERR(mode);
-		dev_err(&pdev->dev, "gpio request failed, ret %d\n", ret);
-		goto clean_ndev_ret;
-	}
-
-	/*
-	 * This may be required here for child devices.
-	 */
-	pm_runtime_enable(&pdev->dev);
-
-	/* Select default pin state */
-	pinctrl_pm_select_default_state(&pdev->dev);
-
-	/* Need to enable clocks with runtime PM api to access module
-	 * registers
-	 */
-	ret = pm_runtime_get_sync(&pdev->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(&pdev->dev);
-		goto clean_runtime_disable_ret;
-	}
-
-	ret = cpsw_probe_dt(&cpsw->data, pdev);
-	if (ret)
-		goto clean_dt_ret;
-
-	data = &cpsw->data;
+    
+	pm_runtime_enable(&pdev->dev);	/* Select default pin state */
+	pinctrl_pm_select_default_state(&pdev->dev);//Need to enable clocks with runtime 
+	ret = pm_runtime_get_sync(&pdev->dev);//PM api to access module registers
+ 
+	ret = cpsw_probe_dt(&cpsw->data, pdev);//设备树获取配置并将其赋值给  cpsw_platform_data->data
+	data = &cpsw->data;   //平台数据 cpsw_platform_data data  
 	cpsw->rx_ch_num = 1;
 	cpsw->tx_ch_num = 1;
-
+//判断data->slave_data[0].mac_addr其mac地址是否有效
 	if (is_valid_ether_addr(data->slave_data[0].mac_addr)) {
 		memcpy(priv->mac_addr, data->slave_data[0].mac_addr, ETH_ALEN);
+        //如果有效将其拷贝到priv->mac_addr
 		dev_info(&pdev->dev, "Detected MACID = %pM\n", priv->mac_addr);
 	} else {
-		eth_random_addr(priv->mac_addr);
+		eth_random_addr(priv->mac_addr);//否则就随机给一个
 		dev_info(&pdev->dev, "Random MACID = %pM\n", priv->mac_addr);
 	}
+    memcpy(ndev->dev_addr, priv->mac_addr, ETH_ALEN);//将获得到的mac地址赋值到ndev中
 
-	memcpy(ndev->dev_addr, priv->mac_addr, ETH_ALEN);
-
-	cpsw->slaves = devm_kcalloc(&pdev->dev,
-				    data->slaves, sizeof(struct cpsw_slave),
-				    GFP_KERNEL);
-	if (!cpsw->slaves) {
-		ret = -ENOMEM;
-		goto clean_dt_ret;
-	}
-	for (i = 0; i < data->slaves; i++)
+	cpsw->slaves = devm_kcalloc(&pdev->dev,data->slaves, sizeof(struct cpsw_slave),GFP_KERNEL);
+	for (i = 0; i < data->slaves; i++)//从设备树中获取slaves个数
 		cpsw->slaves[i].slave_num = i;
-
-	cpsw->slaves[0].ndev = ndev;
+//对每个salve进行初始化，这里采用for循环的意义在于可能有多个网卡，am335x支持双网卡。
+	cpsw->slaves[0].ndev = ndev;    //将ndev赋值给
 	priv->emac_port = 0;
 
 	clk = devm_clk_get(&pdev->dev, "fck");
-	if (IS_ERR(clk)) {
-		dev_err(priv->dev, "fck is not found\n");
-		ret = -ENODEV;
-		goto clean_dt_ret;
-	}
+
 	cpsw->bus_freq_mhz = clk_get_rate(clk) / 1000000;
-
+/*
+    但是为什么就可以通过res = platform_get_resource(pdev, IORESOURCE_MEM, 0);拿到资源？ 
+    肯定有地方对regs_addr做了定义，并且和这个设备的platform_device进行了绑定   
+    static struct resource s3c_i2c_resource[] = {
+     [0] = {
+      .start = S3C24XX_PA_IIC,
+      .end   = S3C24XX_PA_IIC + S3C24XX_SZ_IIC - 1,
+      .flags = IORESOURCE_MEM,
+     },
+      [1] = {
+      .start = IRQ_IIC,
+      .end   = IRQ_IIC,
+      .flags = IORESOURCE_IRQ,
+     }
+    };
+    */
 	ss_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	ss_regs = devm_ioremap_resource(&pdev->dev, ss_res);
-	if (IS_ERR(ss_regs)) {
-		ret = PTR_ERR(ss_regs);
-		goto clean_dt_ret;
-	}
-	cpsw->regs = ss_regs;
+	ss_regs = devm_ioremap_resource(&pdev->dev, ss_res);    //将物理地址转换为虚拟地址
 
-	cpsw->version = readl(&cpsw->regs->id_ver);
+	cpsw->regs = ss_regs;
+	cpsw->version = readl(&cpsw->regs->id_ver);//获取版本号
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	cpsw->wr_regs = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(cpsw->wr_regs)) {
-		ret = PTR_ERR(cpsw->wr_regs);
-		goto clean_dt_ret;
-	}
+	cpsw->wr_regs = devm_ioremap_resource(&pdev->dev, res); //将物理地址转换为虚拟地址
 
 	memset(&dma_params, 0, sizeof(dma_params));
 	memset(&ale_params, 0, sizeof(ale_params));
@@ -3455,8 +3407,7 @@ static int cpsw_probe(struct platform_device *pdev)
 		slave_offset         = CPSW2_SLAVE_OFFSET;
 		slave_size           = CPSW2_SLAVE_SIZE;
 		sliver_offset        = CPSW2_SLIVER_OFFSET;
-		dma_params.desc_mem_phys =
-			(u32 __force) ss_res->start + CPSW2_BD_OFFSET;
+		dma_params.desc_mem_phys =(u32 __force) ss_res->start + CPSW2_BD_OFFSET;
 		break;
 	default:
 		dev_err(priv->dev, "unknown version 0x%08x\n", cpsw->version);
@@ -3489,84 +3440,34 @@ static int cpsw_probe(struct platform_device *pdev)
 	dma_params.descs_pool_size	= descs_pool_size;
 
 	cpsw->dma = cpdma_ctlr_create(&dma_params);
-	if (!cpsw->dma) {
-		dev_err(priv->dev, "error initializing dma\n");
-		ret = -ENOMEM;
-		goto clean_dt_ret;
-	}
-
 	soc = soc_device_match(cpsw_soc_devices);
 	if (soc)
 		cpsw->quirk_irq = 1;
-
 	ch = cpsw->quirk_irq ? 0 : 7;
 	cpsw->txv[0].ch = cpdma_chan_create(cpsw->dma, ch, cpsw_tx_handler, 0);
-	if (IS_ERR(cpsw->txv[0].ch)) {
-		dev_err(priv->dev, "error initializing tx dma channel\n");
-		ret = PTR_ERR(cpsw->txv[0].ch);
-		goto clean_dma_ret;
-	}
-
 	cpsw->rxv[0].ch = cpdma_chan_create(cpsw->dma, 0, cpsw_rx_handler, 1);
-	if (IS_ERR(cpsw->rxv[0].ch)) {
-		dev_err(priv->dev, "error initializing rx dma channel\n");
-		ret = PTR_ERR(cpsw->rxv[0].ch);
-		goto clean_dma_ret;
-	}
-
+    
 	ale_params.dev			= &pdev->dev;
 	ale_params.ale_ageout		= ale_ageout;
 	ale_params.ale_entries		= data->ale_entries;
 	ale_params.ale_ports		= CPSW_ALE_PORTS_NUM;
 
 	cpsw->ale = cpsw_ale_create(&ale_params);
-	if (!cpsw->ale) {
-		dev_err(priv->dev, "error initializing ale engine\n");
-		ret = -ENODEV;
-		goto clean_dma_ret;
-	}
-
 	cpsw->cpts = cpts_create(cpsw->dev, cpts_regs, cpsw->dev->of_node);
-	if (IS_ERR(cpsw->cpts)) {
-		ret = PTR_ERR(cpsw->cpts);
-		goto clean_dma_ret;
-	}
-
 	ndev->irq = platform_get_irq(pdev, 1);
-	if (ndev->irq < 0) {
-		dev_err(priv->dev, "error getting irq resource\n");
-		ret = ndev->irq;
-		goto clean_dma_ret;
-	}
-
 	ndev->features |= NETIF_F_HW_VLAN_CTAG_FILTER | NETIF_F_HW_VLAN_CTAG_RX;
-
 	ndev->netdev_ops = &cpsw_netdev_ops;//这里获取了上层网卡驱动的操作函数集
-	//当执行ifconfig    up时间会执行里面的cpsw_ndo_open
+	                   //当执行ifconfig    up时间会执行里面的cpsw_ndo_open
 	ndev->ethtool_ops = &cpsw_ethtool_ops;//
-	netif_napi_add(ndev, &cpsw->napi_rx,
-		       cpsw->quirk_irq ? cpsw_rx_poll : cpsw_rx_mq_poll,
-		       CPSW_POLL_WEIGHT);
-	netif_tx_napi_add(ndev, &cpsw->napi_tx,
-			  cpsw->quirk_irq ? cpsw_tx_poll : cpsw_tx_mq_poll,
-			  CPSW_POLL_WEIGHT);
+	netif_napi_add(ndev, &cpsw->napi_rx,cpsw->quirk_irq ? cpsw_rx_poll : cpsw_rx_mq_poll,CPSW_POLL_WEIGHT);
+	netif_tx_napi_add(ndev, &cpsw->napi_tx, cpsw->quirk_irq ? cpsw_tx_poll : cpsw_tx_mq_poll,CPSW_POLL_WEIGHT);
 	cpsw_split_res(ndev);
 
 	/* register the network device */
 	SET_NETDEV_DEV(ndev, &pdev->dev);
-	ret = register_netdev(ndev);//注册网络设备
-	if (ret) {
-		dev_err(priv->dev, "error registering net device\n");
-		ret = -ENODEV;
-		goto clean_dma_ret;
-	}
-
+	ret = register_netdev(ndev);           //注册网络设备
 	if (cpsw->data.dual_emac) {
 		ret = cpsw_probe_dual_emac(priv);//第二个口的初始化
-		if (ret) {
-			cpsw_err(priv, probe, "error probe slave 2 emac interface\n");
-			goto clean_unregister_netdev_ret;
-		}
 	}
 
 	/* Grab RX and TX IRQs. Note that we also have RX_THRESHOLD and
@@ -3576,44 +3477,77 @@ static int cpsw_probe(struct platform_device *pdev)
 	 * If anyone wants to implement support for those, make sure to
 	 * first request and append them to irqs_table array.
 	 */
-
 	/* RX IRQ */
-	irq = platform_get_irq(pdev, 1);
-	if (irq < 0) {
-		ret = irq;
-		goto clean_dma_ret;
-	}
-
+	irq = platform_get_irq(pdev, 1);  //接收中断
 	cpsw->irqs_table[0] = irq;
-	ret = devm_request_irq(&pdev->dev, irq, cpsw_rx_interrupt,
-			       0, dev_name(&pdev->dev), cpsw);
-	if (ret < 0) {
-		dev_err(priv->dev, "error attaching irq (%d)\n", ret);
-		goto clean_dma_ret;
-	}
-
+	ret = devm_request_irq(&pdev->dev, irq, cpsw_rx_interrupt,0, dev_name(&pdev->dev), cpsw);
 	/* TX IRQ */
-	irq = platform_get_irq(pdev, 2);
-	if (irq < 0) {
-		ret = irq;
-		goto clean_dma_ret;
-	}
-
+	irq = platform_get_irq(pdev, 2);  //发送中断
 	cpsw->irqs_table[1] = irq;
-	ret = devm_request_irq(&pdev->dev, irq, cpsw_tx_interrupt,
-			       0, dev_name(&pdev->dev), cpsw);
+	ret = devm_request_irq(&pdev->dev, irq, cpsw_tx_interrupt, 0, dev_name(&pdev->dev), cpsw);
 	if (ret < 0) {
 		dev_err(priv->dev, "error attaching irq (%d)\n", ret);
 		goto clean_dma_ret;
 	}
 
-	cpsw_notice(priv, probe,
-		    "initialized device (regs %pa, irq %d, pool size %d)\n",
-		    &ss_res->start, ndev->irq, dma_params.descs_pool_size);
-
+	cpsw_notice(priv, probe,"initialized device (regs %pa, irq %d, pool size %d)\n",&ss_res->start, ndev->irq, dma_params.descs_pool_size);
 	pm_runtime_put(&pdev->dev);
 
 	return 0;
+    /*
+    mac: ethernet@4a100000 {
+        compatible = "ti,am335x-cpsw","ti,cpsw";
+        ti,hwmods = "cpgmac0";
+        clocks = <&cpsw_125mhz_gclk>, <&cpsw_cpts_rft_clk>;
+        clock-names = "fck", "cpts";
+        cpdma_channels = <8>;
+        ale_entries = <1024>;
+        bd_ram_size = <0x2000>;
+        mac_control = <0x20>;
+        slaves = <2>;
+        active_slave = <0>;
+        cpts_clock_mult = <0x80000000>;
+        cpts_clock_shift = <29>;
+        reg = <0x4a100000 0x800
+        0x4a101200 0x100>;
+    #address-cells = <1>;
+    #size-cells = <1>;
+    
+        //c0_rx_thresh_pend
+        //c0_rx_pend
+        //c0_tx_pend
+        //c0_misc_pend
+    
+        interrupts = <40 41 42 43>;
+        ranges;
+        syscon = <&scm_conf>;
+        status = "disabled";
+    
+        davinci_mdio: mdio@4a101000 {
+        compatible = "ti,cpsw-mdio","ti,davinci_mdio";
+    #address-cells = <1>;
+    #size-cells = <0>;
+        ti,hwmods = "davinci_mdio";
+        bus_freq = <1000000>;
+        reg = <0x4a101000 0x100>;
+        status = "disabled";
+        };
+    
+        cpsw_emac0: slave@4a100200 {
+        //  Filled in by U-Boot
+            mac-address = [ 00 00 00 00 00 00 ];
+        };
+        cpsw_emac1: slave@4a100300 {
+            // Filled in by U-Boot 
+            mac-address = [ 00 00 00 00 00 00 ];
+        };
+        phy_sel: cpsw-phy-sel@44e10650 {
+            compatible = "ti,am3352-cpsw-phy-sel";
+            reg= <0x44e10650 0x4>;
+            reg-names = "gmii-sel";
+        };
+    };
+    */
 
 clean_unregister_netdev_ret:
 	unregister_netdev(ndev);
