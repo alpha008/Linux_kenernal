@@ -1853,34 +1853,27 @@ static int cpsw_ndo_open(struct net_device *ndev)
 	struct cpsw_common *cpsw = priv->cpsw;
 	int ret;
 	u32 reg;
-
 	ret = pm_runtime_get_sync(cpsw->dev);
 	if (ret < 0) {
 		pm_runtime_put_noidle(cpsw->dev);
 		return ret;
 	}
-
 	netif_carrier_off(ndev);
-
 	/* Notify the stack of the actual queue counts. */
 	ret = netif_set_real_num_tx_queues(ndev, cpsw->tx_ch_num);
 	if (ret) {
 		dev_err(priv->dev, "cannot set real number of tx queues\n");
 		goto err_cleanup;
 	}
-
 	ret = netif_set_real_num_rx_queues(ndev, cpsw->rx_ch_num);
 	if (ret) {
 		dev_err(priv->dev, "cannot set real number of rx queues\n");
 		goto err_cleanup;
 	}
-
 	reg = cpsw->version;
-
 	dev_info(priv->dev, "initializing cpsw version %d.%d (%d)\n",
 		 CPSW_MAJOR_VERSION(reg), CPSW_MINOR_VERSION(reg),
 		 CPSW_RTL_VERSION(reg));
-
 	/* Initialize host and slave ports */
 	if (!cpsw->usage_count)
 		cpsw_init_host_port(priv);
@@ -1892,26 +1885,20 @@ static int cpsw_ndo_open(struct net_device *ndev)
 	else
 		cpsw_ale_add_vlan(cpsw->ale, cpsw->data.default_vlan,
 				  ALE_ALL_PORTS, ALE_ALL_PORTS, 0, 0);
-
 	/* initialize shared resources for every ndev */
 	if (!cpsw->usage_count) {
 		/* disable priority elevation */
 		writel_relaxed(0, &cpsw->regs->ptype);
-
 		/* enable statistics collection only on all ports */
 		writel_relaxed(0x7, &cpsw->regs->stat_port_en);
-
 		/* Enable internal fifo flow control */
 		writel(0x7, &cpsw->regs->flow_control);
-
 		napi_enable(&cpsw->napi_rx);
 		napi_enable(&cpsw->napi_tx);
-
 		if (cpsw->tx_irq_disabled) {
 			cpsw->tx_irq_disabled = false;
 			enable_irq(cpsw->irqs_table[1]);
 		}
-
 		if (cpsw->rx_irq_disabled) {
 			cpsw->rx_irq_disabled = false;
 			enable_irq(cpsw->irqs_table[0]);
@@ -2530,6 +2517,7 @@ static int cpsw_ndo_setup_tc(struct net_device *ndev, enum tc_setup_type type,
 		return -EOPNOTSUPP;
 	}
 }
+                 
 //自动协商开始的地方
 static const struct net_device_ops cpsw_netdev_ops = {
 	.ndo_open		= cpsw_ndo_open,//当执行ifconfig    up时间会执行里面的cpsw_ndo_open
@@ -3067,56 +3055,46 @@ static int cpsw_probe_dt(struct cpsw_platform_data *data,
 	struct device_node *slave_node;
 	int i = 0, ret;
 	u32 prop;
-
 	if (!node)
 		return -EINVAL;
-
 	if (of_property_read_u32(node, "slaves", &prop)) {
 		dev_err(&pdev->dev, "Missing slaves property in the DT.\n");
 		return -EINVAL;
 	}
 	data->slaves = prop;
-
 	if (of_property_read_u32(node, "active_slave", &prop)) {
 		dev_err(&pdev->dev, "Missing active_slave property in the DT.\n");
 		return -EINVAL;
 	}
 	data->active_slave = prop;
-
 	data->slave_data = devm_kcalloc(&pdev->dev,
 					data->slaves,
 					sizeof(struct cpsw_slave_data),
 					GFP_KERNEL);
 	if (!data->slave_data)
 		return -ENOMEM;
-
 	if (of_property_read_u32(node, "cpdma_channels", &prop)) {
 		dev_err(&pdev->dev, "Missing cpdma_channels property in the DT.\n");
 		return -EINVAL;
 	}
 	data->channels = prop;
-
 	if (of_property_read_u32(node, "ale_entries", &prop)) {
 		dev_err(&pdev->dev, "Missing ale_entries property in the DT.\n");
 		return -EINVAL;
 	}
 	data->ale_entries = prop;
-
 	if (of_property_read_u32(node, "bd_ram_size", &prop)) {
 		dev_err(&pdev->dev, "Missing bd_ram_size property in the DT.\n");
 		return -EINVAL;
 	}
 	data->bd_ram_size = prop;
-
 	if (of_property_read_u32(node, "mac_control", &prop)) {
 		dev_err(&pdev->dev, "Missing mac_control property in the DT.\n");
 		return -EINVAL;
 	}
 	data->mac_control = prop;
-
 	if (of_property_read_bool(node, "dual_emac"))
 		data->dual_emac = 1;
-
 	/*
 	 * Populate all the child nodes here...
 	 */
@@ -3326,19 +3304,14 @@ static int cpsw_probe(struct platform_device *pdev)
 	struct cpsw_common		*cpsw;
 	int ret = 0, i, ch;
 	int irq;
-//cpsw_common  内部嵌套了device
 	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
-	if (!cpsw)
+	if (!cpsw)  //cpsw_common  内部嵌套了device
 		return -ENOMEM;
-
 	cpsw->dev = &pdev->dev;
-
 	ndev = alloc_etherdev_mq(sizeof(struct cpsw_priv), CPSW_MAX_QUEUES);
 	if (!ndev) {
 		dev_err(&pdev->dev, "error allocating net_device\n");
-		return -ENOMEM;
-	}
-
+		return -ENOMEM;}
 	platform_set_drvdata(pdev, ndev);
 	priv = netdev_priv(ndev);
 	priv->cpsw = cpsw;
@@ -3346,32 +3319,20 @@ static int cpsw_probe(struct platform_device *pdev)
 	priv->dev  = &ndev->dev;
 	priv->msg_enable = netif_msg_init(debug_level, CPSW_DEBUG);
 	cpsw->rx_packet_max = max(rx_packet_max, 128);
-
 	mode = devm_gpiod_get_array_optional(&pdev->dev, "mode", GPIOD_OUT_LOW);
 	if (IS_ERR(mode)) {
 		ret = PTR_ERR(mode);
 		dev_err(&pdev->dev, "gpio request failed, ret %d\n", ret);
 		goto clean_ndev_ret;
-	}
-
-	/*
-	 * This may be required here for child devices.
-	 */
-	pm_runtime_enable(&pdev->dev);
-
-	/* Select default pin state */
-	pinctrl_pm_select_default_state(&pdev->dev);
-
-	/* Need to enable clocks with runtime PM api to access module
-	 * registers
-	 */
-	ret = pm_runtime_get_sync(&pdev->dev);
+	}// This may be required here for child devices.
+	pm_runtime_enable(&pdev->dev);	/* Select default pin state */
+	pinctrl_pm_select_default_state(&pdev->dev);//Need to enable clocks with runtime 
+	ret = pm_runtime_get_sync(&pdev->dev);//PM api to access module registers
 	if (ret < 0) {
 		pm_runtime_put_noidle(&pdev->dev);
 		goto clean_runtime_disable_ret;
 	}
-
-	ret = cpsw_probe_dt(&cpsw->data, pdev);
+	ret = cpsw_probe_dt(&cpsw->data, pdev);//设备树获取配置
 	if (ret)
 		goto clean_dt_ret;
 
