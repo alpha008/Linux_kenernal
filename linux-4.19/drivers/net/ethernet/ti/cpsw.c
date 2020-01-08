@@ -3309,6 +3309,31 @@ static int cpsw_probe(struct platform_device *pdev)
 	const struct soc_device_attribute *soc;
 	struct cpsw_common		*cpsw;
 	int ret = 0, i, ch;
+<<<<<<< HEAD
+
+	int irq;                              //cpsw_common  内部嵌套了device
+	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
+	cpsw->dev = &pdev->dev;    //平台设备中嵌套dev
+	ndev = alloc_etherdev_mq(sizeof(struct cpsw_priv), CPSW_MAX_QUEUES);//传入priv，创建priv+ndev大小空间
+	platform_set_drvdata(pdev, ndev);     //将申请到的ndev赋值给pdev(平台设备)内的dev	
+	priv = netdev_priv(ndev);  //根据ndev的地址求出priv的起始地址
+	priv->cpsw = cpsw;        //将分配的cpsw空间赋值给priv.cpsw
+	priv->ndev = ndev;        //将分配的ndev空间赋值给priv.ndev
+	priv->dev  = &ndev->dev;  //将分配的ndev空间赋值给priv.dev
+	
+	priv->msg_enable = netif_msg_init(debug_level, CPSW_DEBUG);
+    
+	cpsw->rx_packet_max = max(rx_packet_max, 128);//接收包最大为多少
+	
+	mode = devm_gpiod_get_array_optional(&pdev->dev, "mode", GPIOD_OUT_LOW);
+    
+	pm_runtime_enable(&pdev->dev);	/* Select default pin state */
+	pinctrl_pm_select_default_state(&pdev->dev);//Need to enable clocks with runtime 
+	ret = pm_runtime_get_sync(&pdev->dev);//PM api to access module registers
+ 
+	ret = cpsw_probe_dt(&cpsw->data, pdev);//设备树获取配置并将其赋值给  cpsw_platform_data->data
+	data = &cpsw->data;   //平台数据 cpsw_platform_data data  
+
 
 	int irq;                              //cpsw_common  内部嵌套了device
 	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
