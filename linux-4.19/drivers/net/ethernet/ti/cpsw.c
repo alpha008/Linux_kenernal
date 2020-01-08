@@ -3309,6 +3309,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	const struct soc_device_attribute *soc;
 	struct cpsw_common		*cpsw;
 	int ret = 0, i, ch;
+<<<<<<< HEAD
 	int irq;                              //cpsw_common  内部嵌套了device
 	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
 	cpsw->dev = &pdev->dev;    //平台设备中嵌套dev
@@ -3331,6 +3332,42 @@ static int cpsw_probe(struct platform_device *pdev)
  
 	ret = cpsw_probe_dt(&cpsw->data, pdev);//设备树获取配置并将其赋值给  cpsw_platform_data->data
 	data = &cpsw->data;   //平台数据 cpsw_platform_data data  
+=======
+	int irq;
+	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
+	if (!cpsw)  //cpsw_common  内部嵌套了device
+		return -ENOMEM;
+	cpsw->dev = &pdev->dev;
+	ndev = alloc_etherdev_mq(sizeof(struct cpsw_priv), CPSW_MAX_QUEUES);
+	if (!ndev) {
+		dev_err(&pdev->dev, "error allocating net_device\n");
+		return -ENOMEM;}
+	platform_set_drvdata(pdev, ndev);
+	priv = netdev_priv(ndev);
+	priv->cpsw = cpsw;
+	priv->ndev = ndev;//pri 赋值
+	priv->dev  = &ndev->dev;
+	priv->msg_enable = netif_msg_init(debug_level, CPSW_DEBUG);
+	cpsw->rx_packet_max = max(rx_packet_max, 128);
+	mode = devm_gpiod_get_array_optional(&pdev->dev, "mode", GPIOD_OUT_LOW);
+	if (IS_ERR(mode)) {
+		ret = PTR_ERR(mode);
+		dev_err(&pdev->dev, "gpio request failed, ret %d\n", ret);
+		goto clean_ndev_ret;
+	}// This may be required here for child devices.
+	pm_runtime_enable(&pdev->dev);	/* Select default pin state */
+	pinctrl_pm_select_default_state(&pdev->dev);//Need to enable clocks with runtime 
+	ret = pm_runtime_get_sync(&pdev->dev);//PM api to access module registers
+	if (ret < 0) {
+		pm_runtime_put_noidle(&pdev->dev);
+		goto clean_runtime_disable_ret;
+	}
+	ret = cpsw_probe_dt(&cpsw->data, pdev);//设备树获取配置
+	if (ret)
+		goto clean_dt_ret;
+
+	data = &cpsw->data;
+>>>>>>> 3b80d93bb2c0e8e9b319a522e7872c49e9f69a87
 	cpsw->rx_ch_num = 1;
 	cpsw->tx_ch_num = 1;
 //判断data->slave_data[0].mac_addr其mac地址是否有效
