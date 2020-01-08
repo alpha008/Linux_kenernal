@@ -3309,8 +3309,6 @@ static int cpsw_probe(struct platform_device *pdev)
 	const struct soc_device_attribute *soc;
 	struct cpsw_common		*cpsw;
 	int ret = 0, i, ch;
-<<<<<<< HEAD
-
 	int irq;                              //cpsw_common  内部嵌套了device
 	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
 	cpsw->dev = &pdev->dev;    //平台设备中嵌套dev
@@ -3397,12 +3395,14 @@ static int cpsw_probe(struct platform_device *pdev)
      }
     };
     */
+//CPSW_SS 0x4A10_0000 0x4A10_7FFF 32KB Ethernet Switch Subsystem
 	ss_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ss_regs = devm_ioremap_resource(&pdev->dev, ss_res);    //将物理地址转换为虚拟地址
 
 	cpsw->regs = ss_regs;
 	cpsw->version = readl(&cpsw->regs->id_ver);//获取版本号
-
+	
+//CPSW_WR 0x4A10_1200 0x4A10_1FFF Ethernet Subsystem  Wrapper for RMII/RGMII
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 	cpsw->wr_regs = devm_ioremap_resource(&pdev->dev, res); //将物理地址转换为虚拟地址
 
@@ -3411,29 +3411,29 @@ static int cpsw_probe(struct platform_device *pdev)
 
 	switch (cpsw->version) {
 	case CPSW_VERSION_1:
-		cpsw->host_port_regs = ss_regs + CPSW1_HOST_PORT_OFFSET;
-		cpts_regs		= ss_regs + CPSW1_CPTS_OFFSET;
-		cpsw->hw_stats	     = ss_regs + CPSW1_HW_STATS;
-		dma_params.dmaregs   = ss_regs + CPSW1_CPDMA_OFFSET;
-		dma_params.txhdp     = ss_regs + CPSW1_STATERAM_OFFSET;
-		ale_params.ale_regs  = ss_regs + CPSW1_ALE_OFFSET;
-		slave_offset         = CPSW1_SLAVE_OFFSET;
-		slave_size           = CPSW1_SLAVE_SIZE;
-		sliver_offset        = CPSW1_SLIVER_OFFSET;
+		cpsw->host_port_regs = ss_regs + CPSW1_HOST_PORT_OFFSET;//0x4a10 0000 028
+		cpts_regs		= ss_regs + CPSW1_CPTS_OFFSET;          //500
+		cpsw->hw_stats	     = ss_regs + CPSW1_HW_STATS;        //400
+		dma_params.dmaregs   = ss_regs + CPSW1_CPDMA_OFFSET;    //100
+		dma_params.txhdp     = ss_regs + CPSW1_STATERAM_OFFSET; //200
+		ale_params.ale_regs  = ss_regs + CPSW1_ALE_OFFSET;      //600
+		slave_offset         = CPSW1_SLAVE_OFFSET;              //050
+		slave_size           = CPSW1_SLAVE_SIZE;                //040
+		sliver_offset        = CPSW1_SLIVER_OFFSET;             //700
 		dma_params.desc_mem_phys = 0;
 		break;
 	case CPSW_VERSION_2:
 	case CPSW_VERSION_3:
-	case CPSW_VERSION_4:
-		cpsw->host_port_regs = ss_regs + CPSW2_HOST_PORT_OFFSET;
-		cpts_regs		= ss_regs + CPSW2_CPTS_OFFSET;
-		cpsw->hw_stats	     = ss_regs + CPSW2_HW_STATS;
-		dma_params.dmaregs   = ss_regs + CPSW2_CPDMA_OFFSET;
-		dma_params.txhdp     = ss_regs + CPSW2_STATERAM_OFFSET;
-		ale_params.ale_regs  = ss_regs + CPSW2_ALE_OFFSET;
-		slave_offset         = CPSW2_SLAVE_OFFSET;
-		slave_size           = CPSW2_SLAVE_SIZE;
-		sliver_offset        = CPSW2_SLIVER_OFFSET;
+	case CPSW_VERSION_4: //芯片手册为此处
+		cpsw->host_port_regs = ss_regs + CPSW2_HOST_PORT_OFFSET;//0x4a10 0000
+		cpts_regs		= ss_regs + CPSW2_CPTS_OFFSET;          //c00
+		cpsw->hw_stats	     = ss_regs + CPSW2_HW_STATS;        //900
+		dma_params.dmaregs   = ss_regs + CPSW2_CPDMA_OFFSET;    //800
+		dma_params.txhdp     = ss_regs + CPSW2_STATERAM_OFFSET; //a00
+		ale_params.ale_regs  = ss_regs + CPSW2_ALE_OFFSET;      //d00
+		slave_offset         = CPSW2_SLAVE_OFFSET;              //200
+		slave_size           = CPSW2_SLAVE_SIZE;                //100
+		sliver_offset        = CPSW2_SLIVER_OFFSET;             //d80
 		dma_params.desc_mem_phys =(u32 __force) ss_res->start + CPSW2_BD_OFFSET;
 		break;
 	default:
