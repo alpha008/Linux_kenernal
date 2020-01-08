@@ -3309,6 +3309,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	const struct soc_device_attribute *soc;
 	struct cpsw_common		*cpsw;
 	int ret = 0, i, ch;
+
 	int irq;                              //cpsw_common  内部嵌套了device
 	cpsw = devm_kzalloc(&pdev->dev, sizeof(struct cpsw_common), GFP_KERNEL);
 	cpsw->dev = &pdev->dev;    //平台设备中嵌套dev
@@ -3331,6 +3332,7 @@ static int cpsw_probe(struct platform_device *pdev)
  
 	ret = cpsw_probe_dt(&cpsw->data, pdev);//设备树获取配置并将其赋值给  cpsw_platform_data->data
 	data = &cpsw->data;   //平台数据 cpsw_platform_data data  
+
 	cpsw->rx_ch_num = 1;
 	cpsw->tx_ch_num = 1;
 //判断data->slave_data[0].mac_addr其mac地址是否有效
