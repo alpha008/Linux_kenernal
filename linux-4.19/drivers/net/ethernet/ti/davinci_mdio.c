@@ -400,7 +400,7 @@ static int davinci_mdio_probe(struct platform_device *pdev)
 	data->bus->name		= dev_name(dev);
 	data->bus->read		= davinci_mdio_read,
 	data->bus->write	= davinci_mdio_write,
-	data->bus->reset	= davinci_mdio_reset,
+	data->bus->reset	= davinci_mdio_reset,//这里执行reset
 	data->bus->parent	= dev;
 	data->bus->priv		= data;
 
@@ -431,6 +431,14 @@ static int davinci_mdio_probe(struct platform_device *pdev)
 	 */
 	if (dev->of_node && of_get_child_count(dev->of_node))
 		data->skip_scan = true;
+    /**
+     * of_mdiobus_register - Register mii_bus and create PHYs from the device tree
+     * @mdio: pointer to mii_bus structure
+     * @np: pointer to device_node of MDIO bus.
+     *
+     * This function registers the mii_bus structure and registers a phy_device
+     * for each child node of @np.
+     */  
 
 	ret = of_mdiobus_register(data->bus, dev->of_node);
 	if (ret)

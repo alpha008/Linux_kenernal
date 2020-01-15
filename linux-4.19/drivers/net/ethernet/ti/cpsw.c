@@ -3067,10 +3067,7 @@ static int cpsw_probe_dt(struct cpsw_platform_data *data,
 		return -EINVAL;
 	}
 	data->active_slave = prop;
-	data->slave_data = devm_kcalloc(&pdev->dev,
-					data->slaves,
-					sizeof(struct cpsw_slave_data),
-					GFP_KERNEL);
+	data->slave_data = devm_kcalloc(&pdev->dev,data->slaves,sizeof(struct cpsw_slave_data),GFP_KERNEL);
 	if (!data->slave_data)
 		return -ENOMEM;
 	if (of_property_read_u32(node, "cpdma_channels", &prop)) {
@@ -3113,13 +3110,10 @@ static int cpsw_probe_dt(struct cpsw_platform_data *data,
 		if (strcmp(slave_node->name, "slave"))
 			continue;
 
-		slave_data->phy_node = of_parse_phandle(slave_node,
-							"phy-handle", 0);
+		slave_data->phy_node = of_parse_phandle(slave_node,"phy-handle", 0);
 		parp = of_get_property(slave_node, "phy_id", &lenp);
 		if (slave_data->phy_node) {
-			dev_dbg(&pdev->dev,
-				"slave[%d] using phy-handle=\"%pOF\"\n",
-				i, slave_data->phy_node);
+			dev_dbg(&pdev->dev,"slave[%d] using phy-handle=\"%pOF\"\n",i, slave_data->phy_node);
 		} else if (of_phy_is_fixed_link(slave_node)) {
 			/* In the case of a fixed PHY, the DT node associated
 			 * to the PHY is the Ethernet MAC DT node.
@@ -3152,15 +3146,12 @@ static int cpsw_probe_dt(struct cpsw_platform_data *data,
 				 PHY_ID_FMT, mdio->name, phyid);
 			put_device(&mdio->dev);
 		} else {
-			dev_err(&pdev->dev,
-				"No slave[%d] phy_id, phy-handle, or fixed-link property\n",
-				i);
+			dev_err(&pdev->dev,"No slave[%d] phy_id, phy-handle, or fixed-link property\n",i);
 			goto no_phy_slave;
 		}
 		slave_data->phy_if = of_get_phy_mode(slave_node);
 		if (slave_data->phy_if < 0) {
-			dev_err(&pdev->dev, "Missing or malformed slave[%d] phy-mode property\n",
-				i);
+			dev_err(&pdev->dev, "Missing or malformed slave[%d] phy-mode property\n",i);
 			return slave_data->phy_if;
 		}
 

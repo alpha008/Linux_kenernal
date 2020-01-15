@@ -401,7 +401,7 @@ int __mdiobus_register(struct mii_bus *bus, struct module *owner)
 	}
 
 	if (bus->reset)
-		bus->reset(bus);
+		bus->reset(bus);//这里执行reset函数davinci_mdio_reset
 //这里进行扫描，扫描规则根据mask和id
 
 	for (i = 0; i < PHY_MAX_ADDR; i++) {
