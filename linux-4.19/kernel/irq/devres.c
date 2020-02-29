@@ -64,8 +64,7 @@ int devm_request_threaded_irq(struct device *dev, unsigned int irq,
 	if (!devname)
 		devname = dev_name(dev);
 
-	rc = request_threaded_irq(irq, handler, thread_fn, irqflags, devname,
-				  dev_id);
+	rc = request_threaded_irq(irq, handler, thread_fn, irqflags, devname,dev_id);
 	if (rc) {
 		devres_free(dr);
 		return rc;

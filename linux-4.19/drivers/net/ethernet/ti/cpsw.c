@@ -954,11 +954,13 @@ static irqreturn_t cpsw_rx_interrupt(int irq, void *dev_id)
 	struct cpsw_common *cpsw = dev_id;
 
 	cpdma_ctlr_eoi(cpsw->dma, CPDMA_EOI_RX);
-	writel(0, &cpsw->wr_regs->rx_en);
+    //0x4A10_0800
+    //CPDMA_EOI_VECTOR CPDMA_INT END OF INTERRUPT VECTOR
+	writel(0, &cpsw->wr_regs->rx_en);//0x4A10_1200 中断使能 打开接收使能
 
-	if (cpsw->quirk_irq) {
+	if (cpsw->quirk_irq) {//如果为真       如果为假
 		disable_irq_nosync(cpsw->irqs_table[0]);
-		cpsw->rx_irq_disabled = true;
+		cpsw->rx_irq_disabled = true;//关闭接收中断
 	}
 
 	napi_schedule(&cpsw->napi_rx);
@@ -1055,10 +1057,10 @@ static int cpsw_rx_poll(struct napi_struct *napi_rx, int budget)
 	num_rx = cpdma_chan_process(cpsw->rxv[0].ch, budget);
 	if (num_rx < budget) {
 		napi_complete_done(napi_rx, num_rx);
-		writel(0xff, &cpsw->wr_regs->rx_en);
+		writel(0xff, &cpsw->wr_regs->rx_en);   //打开中断
 		if (cpsw->rx_irq_disabled) {
-			cpsw->rx_irq_disabled = false;
-			enable_irq(cpsw->irqs_table[0]);
+			cpsw->rx_irq_disabled = false;   
+			enable_irq(cpsw->irqs_table[0]);  //中断标志位打开
 		}
 	}
 
@@ -3461,10 +3463,12 @@ static int cpsw_probe(struct platform_device *pdev)
 	soc = soc_device_match(cpsw_soc_devices);
 	if (soc)
 		cpsw->quirk_irq = 1;
-	ch = cpsw->quirk_irq ? 0 : 7;
+	ch = cpsw->quirk_irq ? 0 : 7; //在这里进行初始化
 	cpsw->txv[0].ch = cpdma_chan_create(cpsw->dma, ch, cpsw_tx_handler, 0);
+    //	chan->handler	= handler;   把这个函数赋值给了chan->handler 并返回了chan  
+    //  8个发送队列
 	cpsw->rxv[0].ch = cpdma_chan_create(cpsw->dma, 0, cpsw_rx_handler, 1);
-    
+    //  接收处理函数8个
 	ale_params.dev			= &pdev->dev;
 	ale_params.ale_ageout		= ale_ageout;
 	ale_params.ale_entries		= data->ale_entries;
@@ -3495,11 +3499,16 @@ static int cpsw_probe(struct platform_device *pdev)
 	 * If anyone wants to implement support for those, make sure to
 	 * first request and append them to irqs_table array.
 	 */
-	/* RX IRQ */
+/* RX IRQ */    /*
+40 3PGSWRXTHR0   (RX_THRESH_PULSE)   CPSW (Ethernet) c0_rx_thresh_pend
+41 3PGSWRXINT0   (RX_PULSE)          CPSW (Ethernet) c0_rx_pend
+42 3PGSWTXINT0   (TX_PULSE)          CPSW (Ethernet) c0_tx_pend
+43 3PGSWMISC0    (MISC_PULSE)        CPSW (Ethernet) c0_misc_pend*/
+
 	irq = platform_get_irq(pdev, 1);  //接收中断
 	cpsw->irqs_table[0] = irq;
 	ret = devm_request_irq(&pdev->dev, irq, cpsw_rx_interrupt,0, dev_name(&pdev->dev), cpsw);
-	/* TX IRQ */
+/* TX IRQ */
 	irq = platform_get_irq(pdev, 2);  //发送中断
 	cpsw->irqs_table[1] = irq;
 	ret = devm_request_irq(&pdev->dev, irq, cpsw_tx_interrupt, 0, dev_name(&pdev->dev), cpsw);

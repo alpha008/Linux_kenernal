@@ -1866,9 +1866,23 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
 
 		disable_irq(irq);
 		local_irq_save(flags);
+#if 1
+static irqreturn_t cpsw_tx_interrupt(int irq, void *dev_id)
+{
+	struct cpsw_common *cpsw = dev_id;
+	writel(0, &cpsw->wr_regs->tx_en);
+	cpdma_ctlr_eoi(cpsw->dma, CPDMA_EOI_TX);
 
+	if (cpsw->quirk_irq) {
+		disable_irq_nosync(cpsw->irqs_table[1]);
+		cpsw->tx_irq_disabled = true;
+	}
+
+	napi_schedule(&cpsw->napi_tx);
+	return IRQ_HANDLED;
+}
+#endif  //这里预留两个参数是为了以后调试使用
 		handler(irq, dev_id);
-
 		local_irq_restore(flags);
 		enable_irq(irq);
 	}

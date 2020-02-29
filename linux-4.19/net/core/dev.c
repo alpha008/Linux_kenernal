@@ -3925,6 +3925,10 @@ static inline void ____napi_schedule(struct softnet_data *sd,
 {
 	list_add_tail(&napi->poll_list, &sd->poll_list);
 	__raise_softirq_irqoff(NET_RX_SOFTIRQ);
+/*
+open_softirq(NET_TX_SOFTIRQ, net_tx_action);
+open_softirq(NET_RX_SOFTIRQ, net_rx_action);
+*/
 }
 
 #ifdef CONFIG_RPS
@@ -5869,9 +5873,9 @@ void __napi_schedule(struct napi_struct *n)
 {
 	unsigned long flags;
 
-	local_irq_save(flags);
+	local_irq_save(flags);//保存中断状态
 	____napi_schedule(this_cpu_ptr(&softnet_data), n);
-	local_irq_restore(flags);
+	local_irq_restore(flags);//恢复中断状态
 }
 EXPORT_SYMBOL(__napi_schedule);
 
@@ -6247,6 +6251,11 @@ static int napi_poll(struct napi_struct *n, struct list_head *repoll)
 	work = 0;
 	if (test_bit(NAPI_STATE_SCHED, &n->state)) {
 		work = n->poll(n, weight);
+/*
+netif_napi_add(ndev, &cpsw->napi_rx,cpsw->quirk_irq ? cpsw_rx_poll : cpsw_rx_mq_poll,CPSW_POLL_WEIGHT);
+netif_tx_napi_add(ndev, &cpsw->napi_tx, cpsw->quirk_irq ? cpsw_tx_poll : cpsw_tx_mq_poll,CPSW_POLL_WEIGHT);
+
+*/
 		trace_napi_poll(n, work, weight);
 	}
 

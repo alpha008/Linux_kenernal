@@ -522,7 +522,7 @@ struct cpdma_ctlr *cpdma_ctlr_create(struct cpdma_params *params)
 	/* split pool equally between RX/TX by default */
 	ctlr->num_tx_desc = ctlr->pool->num_desc / 2;
 	ctlr->num_rx_desc = ctlr->pool->num_desc - ctlr->num_tx_desc;
-
+//接收发描述符各一半
 	if (WARN_ON(ctlr->num_chan > CPDMA_MAX_CHANNELS))
 		ctlr->num_chan = CPDMA_MAX_CHANNELS;
 	return ctlr;
@@ -1129,6 +1129,13 @@ static void __cpdma_chan_free(struct cpdma_chan *chan,
 	dma_unmap_single(ctlr->dev, buff_dma, origlen, chan->dir);
 	cpdma_desc_free(pool, desc, 1);
 	(*chan->handler)((void *)token, outlen, status);
+/*
+cpsw->txv[0].ch = cpdma_chan_create(cpsw->dma, ch, cpsw_tx_handler, 0);
+cpsw->rxv[0].ch = cpdma_chan_create(cpsw->dma, 0, cpsw_rx_handler, 1);
+chan->handler   = handler;   把这个函数赋值给了chan->handler 并返回了chan  
+8个发送队列
+
+*/
 }
 
 static int __cpdma_chan_process(struct cpdma_chan *chan)

@@ -353,7 +353,9 @@ static const struct of_device_id davinci_mdio_of_mtable[] = {
 
 MODULE_DEVICE_TABLE(of, davinci_mdio_of_mtable);
 #endif
-
+/*
+    这里主要通过mdio中的mii总线来扫描并创建phy芯片
+*/
 static int davinci_mdio_probe(struct platform_device *pdev)
 {
 	struct mdio_platform_data *pdata = dev_get_platdata(&pdev->dev);
