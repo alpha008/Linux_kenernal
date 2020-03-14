@@ -158,21 +158,24 @@ __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
 	unsigned short _service_access_point;
 	const unsigned short *sap;
 	const struct ethhdr *eth;
-
+    /*把接收net_device 赋给skb*/
 	skb->dev = dev;
+     /*给skb 的 mac 头指针赋值*/
 	skb_reset_mac_header(skb);
 
 	eth = (struct ethhdr *)skb->data;
 	skb_pull_inline(skb, ETH_HLEN);
-
+    /*把 skb->data 下移，跳过以太头*/
+    
+    /*判断是否是广播和组播报文，是就给skb->pkt_type赋值*/
 	if (unlikely(is_multicast_ether_addr_64bits(eth->h_dest))) {
 		if (ether_addr_equal_64bits(eth->h_dest, dev->broadcast))
 			skb->pkt_type = PACKET_BROADCAST;
 		else
 			skb->pkt_type = PACKET_MULTICAST;
-	}
-	else if (unlikely(!ether_addr_equal_64bits(eth->h_dest,
-						   dev->dev_addr)))
+        
+	} /*如果报文的目的MAC不是到接收设备的MAC，设置skb->pkt_type*/
+	else if (unlikely(!ether_addr_equal_64bits(eth->h_dest,dev->dev_addr)))
 		skb->pkt_type = PACKET_OTHERHOST;
 
 	/*
@@ -181,9 +184,10 @@ __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
 	 * variants has been configured on the receiving interface,
 	 * and if so, set skb->protocol without looking at the packet.
 	 */
+	 /*Marvell 交换芯片dsa 头*/
 	if (unlikely(netdev_uses_dsa(dev)))
 		return htons(ETH_P_XDSA);
-
+    /*以太网头在此返回*/
 	if (likely(eth_proto_is_802_3(eth->h_proto)))
 		return eth->h_proto;
 
@@ -193,6 +197,7 @@ __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
 	 *      layer. We look for FFFF which isn't a used 802.2 SSAP/DSAP. This
 	 *      won't work for fault tolerant netware but does for the rest.
 	 */
+	 /*以下处理非以太网的报文,不讨论*/
 	sap = skb_header_pointer(skb, 0, sizeof(*sap), &_service_access_point);
 	if (sap && *sap == 0xFFFF)
 		return htons(ETH_P_802_3);

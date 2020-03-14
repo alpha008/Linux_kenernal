@@ -320,20 +320,20 @@ struct napi_struct {
 	 * to the per-CPU poll_list, and whoever clears that bit
 	 * can remove from the list right before clearing the bit.
 	 */
-	struct list_head	poll_list;
+	struct list_head	poll_list;//挂到softnet_data的pool_list上
 
-	unsigned long		state;
-	int			weight;
+	unsigned long		state;//NAPI的调度状态
+	int			weight;//一次轮询的最大处理报文数
 	unsigned long		gro_bitmask;
-	int			(*poll)(struct napi_struct *, int);
+	int			(*poll)(struct napi_struct *, int);//轮询函数
 #ifdef CONFIG_NETPOLL
 	int			poll_owner;
 #endif
-	struct net_device	*dev;
+	struct net_device	*dev;//指向关联的网络设备
 	struct gro_list		gro_hash[GRO_HASH_BUCKETS];
 	struct sk_buff		*skb;
 	struct hrtimer		timer;
-	struct list_head	dev_list;
+	struct list_head	dev_list;//对应的网络设备上关联的NAPI链表节点
 	struct hlist_node	napi_hash_node;
 	unsigned int		napi_id;
 };
@@ -474,6 +474,7 @@ bool napi_complete_done(struct napi_struct *n, int work_done);
  */
 static inline bool napi_complete(struct napi_struct *n)
 {
+
 	return napi_complete_done(n, 0);
 }
 
@@ -2930,8 +2931,8 @@ extern int netdev_flow_limit_table_len;
  * Incoming packets are placed on per-CPU queues
  */
 struct softnet_data {
-	struct list_head	poll_list;
-	struct sk_buff_head	process_queue;
+	struct list_head	poll_list;////有需要处理报文的NAPI设备链表
+	struct sk_buff_head	process_queue;////旧接口的输入队列
 
 	/* stats */
 	unsigned int		processed;

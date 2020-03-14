@@ -386,8 +386,7 @@ static inline struct list_head *ptype_head(const struct packet_type *pt)
 	if (pt->type == htons(ETH_P_ALL))
 		return pt->dev ? &pt->dev->ptype_all : &ptype_all;
 	else
-		return pt->dev ? &pt->dev->ptype_specific :
-				 &ptype_base[ntohs(pt->type) & PTYPE_HASH_MASK];
+		return pt->dev ? &pt->dev->ptype_specific :&ptype_base[ntohs(pt->type) & PTYPE_HASH_MASK];
 }
 
 /**
@@ -405,6 +404,10 @@ static inline struct list_head *ptype_head(const struct packet_type *pt)
 
 void dev_add_pack(struct packet_type *pt)
 {
+    /*ptype_all 链表使用ptype_lock 自旋锁来保护。
+         ptype_bash  hash 表中写的时候用该自旋锁来保护，
+        读的时候用rcu 锁来保护，实质就是读的时候禁止抢占*/
+
 	struct list_head *head = ptype_head(pt);
 
 	spin_lock(&ptype_lock);
@@ -1939,6 +1942,12 @@ static inline int deliver_skb(struct sk_buff *skb,
 			      struct packet_type *pt_prev,
 			      struct net_device *orig_dev)
 {
+    /*送入相应协议接收函数时要对skb 的引用计数加一，
+        防止正在使用时被释放。因为一个报文可以被多个协议
+        的接收函数处理。但最后一个协议接收函数不需要对skb
+        的引用计数加一，因为最后一个协议接收函数负责释放该
+        报文所占的内存*/
+
 	if (unlikely(skb_orphan_frags_rx(skb, GFP_ATOMIC)))
 		return -ENOMEM;
 	refcount_inc(&skb->users);
@@ -2624,8 +2633,7 @@ int netif_set_real_num_tx_queues(struct net_device *dev, unsigned int txq)
 	    dev->reg_state == NETREG_UNREGISTERING) {
 		ASSERT_RTNL();
 
-		rc = netdev_queue_update_kobjects(dev, dev->real_num_tx_queues,
-						  txq);
+		rc = netdev_queue_update_kobjects(dev, dev->real_num_tx_queues,txq);
 		if (rc)
 			return rc;
 
@@ -3923,7 +3931,10 @@ int dev_tx_weight __read_mostly = 64;
 static inline void ____napi_schedule(struct softnet_data *sd,
 				     struct napi_struct *napi)
 {
+    /*链表操作必须在关闭本地中断的情况下操作，防止硬中断抢占*/
+
 	list_add_tail(&napi->poll_list, &sd->poll_list);
+     /*把NAPI加入到本地CPU的softnet_data 的pool_list 链表上*/
 	__raise_softirq_irqoff(NET_RX_SOFTIRQ);
 /*
 open_softirq(NET_TX_SOFTIRQ, net_tx_action);
@@ -4766,6 +4777,7 @@ static int __netif_receive_skb_core(struct sk_buff *skb, bool pfmemalloc,
 	bool deliver_exact = false;
 	int ret = NET_RX_DROP;
 	__be16 type;
+    /*给skb赋值接收时间戳*/
 
 	net_timestamp_check(!netdev_tstamp_prequeue, skb);
 
@@ -5872,7 +5884,6 @@ static int process_backlog(struct napi_struct *napi, int quota)
 void __napi_schedule(struct napi_struct *n)
 {
 	unsigned long flags;
-
 	local_irq_save(flags);//保存中断状态
 	____napi_schedule(this_cpu_ptr(&softnet_data), n);
 	local_irq_restore(flags);//恢复中断状态
@@ -5926,6 +5937,9 @@ EXPORT_SYMBOL(__napi_schedule_irqoff);
 
 bool napi_complete_done(struct napi_struct *n, int work_done)
 {
+    /*把NAPI从softnet_data的pool_list上摘除下来*/
+    /*使能NAPI，允许它下次可以被再次调度*/
+
 	unsigned long flags, val, new;
 
 	/*
@@ -5934,8 +5948,7 @@ bool napi_complete_done(struct napi_struct *n, int work_done)
 	 * 2) If we are busy polling, do nothing here, we have
 	 *    the guarantee we will be called later.
 	 */
-	if (unlikely(n->state & (NAPIF_STATE_NPSVC |
-				 NAPIF_STATE_IN_BUSY_POLL)))
+	if (unlikely(n->state & (NAPIF_STATE_NPSVC |NAPIF_STATE_IN_BUSY_POLL)))
 		return false;
 
 	if (n->gro_bitmask) {
@@ -5945,8 +5958,7 @@ bool napi_complete_done(struct napi_struct *n, int work_done)
 			timeout = n->dev->gro_flush_timeout;
 
 		if (timeout)
-			hrtimer_start(&n->timer, ns_to_ktime(timeout),
-				      HRTIMER_MODE_REL_PINNED);
+			hrtimer_start(&n->timer, ns_to_ktime(timeout),HRTIMER_MODE_REL_PINNED);
 		else
 			napi_gro_flush(n, false);
 	}
@@ -6168,6 +6180,7 @@ static void init_gro_hash(struct napi_struct *napi)
 void netif_napi_add(struct net_device *dev, struct napi_struct *napi,
 		    int (*poll)(struct napi_struct *, int), int weight)
 {
+
 	INIT_LIST_HEAD(&napi->poll_list);
 	hrtimer_init(&napi->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_PINNED);
 	napi->timer.function = napi_watchdog;
@@ -6178,11 +6191,13 @@ void netif_napi_add(struct net_device *dev, struct napi_struct *napi,
 		pr_err_once("netif_napi_add() called with weight %d on device %s\n",
 			    weight, dev->name);
 	napi->weight = weight;
+    /*把NAPI加入到网络设备相关联的NAPI链表上去。*/
 	list_add(&napi->dev_list, &dev->napi_list);
 	napi->dev = dev;
 #ifdef CONFIG_NETPOLL
 	napi->poll_owner = -1;
 #endif
+    /*绑定时设置NAPI是已调度状态，禁用该NAPI,以后手动的来清除该标识来使能NAPI.*/
 	set_bit(NAPI_STATE_SCHED, &napi->state);
 	napi_hash_add(napi);
 }
@@ -6191,14 +6206,17 @@ EXPORT_SYMBOL(netif_napi_add);
 void napi_disable(struct napi_struct *n)
 {
 	might_sleep();
+    /*先设置NAPI状态为DISABLE*/
 	set_bit(NAPI_STATE_DISABLE, &n->state);
-
+    /*循环的等待NAPI被调度完成,变成可用的，设置成SCHED状态*/
 	while (test_and_set_bit(NAPI_STATE_SCHED, &n->state))
 		msleep(1);
+
 	while (test_and_set_bit(NAPI_STATE_NPSVC, &n->state))
 		msleep(1);
 
 	hrtimer_cancel(&n->timer);
+    /*清除DISABLE状态*/
 
 	clear_bit(NAPI_STATE_DISABLE, &n->state);
 }
@@ -6249,6 +6267,7 @@ static int napi_poll(struct napi_struct *n, struct list_head *repoll)
 	 * accidentally calling ->poll() when NAPI is not scheduled.
 	 */
 	work = 0;
+    /*如果取得的napi状态是被调度的，就执行napi的轮询处理函数*/
 	if (test_bit(NAPI_STATE_SCHED, &n->state)) {
 		work = n->poll(n, weight);
 /*
@@ -6285,8 +6304,7 @@ netif_tx_napi_add(ndev, &cpsw->napi_tx, cpsw->quirk_irq ? cpsw_tx_poll : cpsw_tx
 	 * prior to exhausting their budget.
 	 */
 	if (unlikely(!list_empty(&n->poll_list))) {
-		pr_warn_once("%s: Budget exhausted after napi rescheduled\n",
-			     n->dev ? n->dev->name : "backlog");
+		pr_warn_once("%s: Budget exhausted after napi rescheduled\n",n->dev ? n->dev->name : "backlog");
 		goto out_unlock;
 	}
 
@@ -6301,12 +6319,14 @@ out_unlock:
 static __latent_entropy void net_rx_action(struct softirq_action *h)
 {
 	struct softnet_data *sd = this_cpu_ptr(&softnet_data);
-	unsigned long time_limit = jiffies +
-		usecs_to_jiffies(netdev_budget_usecs);
+    /*取得本地cpu 的softnet_data 的poll_list  链表*/
+	unsigned long time_limit = jiffies +usecs_to_jiffies(netdev_budget_usecs);
+     /*设置软中断处理程序一次允许的最大执行时间为2个jiffies*/
 	int budget = netdev_budget;
+     /*设置软中断接收函数一次最多处理的报文个数为 300 */
 	LIST_HEAD(list);
 	LIST_HEAD(repoll);
-
+    /*关闭本地cpu的中断，下面判断list是否为空时防止硬中断抢占*/
 	local_irq_disable();
 	list_splice_init(&sd->poll_list, &list);
 	local_irq_enable();
@@ -6319,7 +6339,9 @@ static __latent_entropy void net_rx_action(struct softirq_action *h)
 				goto out;
 			break;
 		}
-
+         /* 取得softnet_data pool_list 链表上的一个napi,
+           即使现在硬中断抢占软中断，会把一个napi挂到pool_list的尾端
+           软中断只会从pool_list 头部移除一个pool_list，这样不存在临界区*/
 		n = list_first_entry(&list, struct napi_struct, poll_list);
 		budget -= napi_poll(n, &repoll);
 
@@ -6333,6 +6355,10 @@ static __latent_entropy void net_rx_action(struct softirq_action *h)
 			break;
 		}
 	}
+    /*如果处理时间超时，或处理的报文数到了最多允许处理的个数，
+    说明还有napi 上有报文需要处理，调度软中断。
+    否则，说明这次软中断处理完全部的napi上的需要处理的报文，不再需要
+    调度软中断了*/
 
 	local_irq_disable();
 
@@ -9606,12 +9632,13 @@ static int __init net_dev_init(void)
 		struct softnet_data *sd = &per_cpu(softnet_data, i);
 
 		INIT_WORK(flush, flush_backlog);
-
+        /*初始化输入队列*/
 		skb_queue_head_init(&sd->input_pkt_queue);
 		skb_queue_head_init(&sd->process_queue);
 #ifdef CONFIG_XFRM_OFFLOAD
 		skb_queue_head_init(&sd->xfrm_backlog);
 #endif
+         /*初始化pool 链表头*/
 		INIT_LIST_HEAD(&sd->poll_list);
 		sd->output_queue_tailp = &sd->output_queue;
 #ifdef CONFIG_RPS
@@ -9619,9 +9646,11 @@ static int __init net_dev_init(void)
 		sd->csd.info = sd;
 		sd->cpu = i;
 #endif
-
+          /*把backlog的轮询函数初始化为 process_backlog
+         该函数来处理传统接口使用的输入队列的报文*/
 		init_gro_hash(&sd->backlog);
 		sd->backlog.poll = process_backlog;
+         /*backlog 轮询函数一次可以处理的报文上限个数*/
 		sd->backlog.weight = weight_p;
 	}
 

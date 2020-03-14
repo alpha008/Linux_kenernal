@@ -1044,22 +1044,28 @@ struct file *file_open_root(struct dentry *dentry, struct vfsmount *mnt,
 	return do_file_open_root(dentry, mnt, filename, &op);
 }
 EXPORT_SYMBOL(file_open_root);
+//
 
+//AT_FDCWD  -100 用来追踪代码         open("/dev/mtd4",O_RDWR, 0);
 long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 {
 	struct open_flags op;
+    //1. 将用户态的flags和mode转换成对应的内核态标志；
 	int fd = build_open_flags(flags, mode, &op);
 	struct filename *tmp;
-
 	if (fd)
 		return fd;
-
+    //2.getname()将文件名从用户态拷贝至内核态；
 	tmp = getname(filename);
 	if (IS_ERR(tmp))
 		return PTR_ERR(tmp);
-
+    //3.为即将打开的文件分配文件描述符；也就是在当前进程的files数组中寻找一个未使用的位置；
 	fd = get_unused_fd_flags(flags);
 	if (fd >= 0) {
+    //4.为文件创建file结构体；
+    //5.如果创建file成功，则通过fd_install()将fd和file进行关联；
+    //6.如果创建file失败，通过put_unused_fd()将已分配的fd返回至系统
+    //                    并且根据file生成错误的fd；
 		struct file *f = do_filp_open(dfd, tmp, &op);
 		if (IS_ERR(f)) {
 			put_unused_fd(fd);
