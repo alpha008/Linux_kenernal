@@ -1973,12 +1973,12 @@ void __init inode_init(void)
 					0,
 					0);
 }
-
+//8.0
 void init_special_inode(struct inode *inode, umode_t mode, dev_t rdev)
 {
 	inode->i_mode = mode;
 	if (S_ISCHR(mode)) {
-		inode->i_fop = &def_chr_fops;
+		inode->i_fop = &def_chr_fops;  //9.0
 		inode->i_rdev = rdev;
 	} else if (S_ISBLK(mode)) {
 		inode->i_fop = &def_blk_fops;

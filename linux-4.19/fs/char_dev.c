@@ -373,6 +373,7 @@ void cdev_put(struct cdev *p)
 /*
  * Called every time a character special file is opened
  */
+ //11.0
 static int chrdev_open(struct inode *inode, struct file *filp)
 {
 	const struct file_operations *fops;

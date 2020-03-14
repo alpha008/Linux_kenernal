@@ -3415,7 +3415,7 @@ finish_open_created:
 	if (error)
 		goto out;
 	BUG_ON(file->f_mode & FMODE_OPENED); /* once it's opened, it's opened */
-	error = vfs_open(&nd->path, file);
+	error = vfs_open(&nd->path, file);//4.0
 	if (error)
 		goto out;
 opened:
@@ -3531,7 +3531,7 @@ static struct file *path_openat(struct nameidata *nd,
 	} else {
 		const char *s = path_init(nd, flags);
 		while (!(error = link_path_walk(s, nd)) &&
-			(error = do_last(nd, file, op)) > 0) {
+			(error = do_last(nd, file, op)) > 0) {  //3.0
 			nd->flags &= ~(LOOKUP_OPEN|LOOKUP_CREATE|LOOKUP_EXCL);
 			s = trailing_symlink(nd);
 		}
@@ -3561,7 +3561,7 @@ struct file *do_filp_open(int dfd, struct filename *pathname,
 	struct file *filp;
 
 	set_nameidata(&nd, dfd, pathname);
-	filp = path_openat(&nd, op, flags | LOOKUP_RCU);
+	filp = path_openat(&nd, op, flags | LOOKUP_RCU);//2.0
 	if (unlikely(filp == ERR_PTR(-ECHILD)))
 		filp = path_openat(&nd, op, flags);
 	if (unlikely(filp == ERR_PTR(-ESTALE)))

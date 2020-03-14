@@ -749,8 +749,9 @@ static int do_dentry_open(struct file *f,
 	if (S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode))
 		f->f_mode |= FMODE_ATOMIC_POS;
 
-	f->f_op = fops_get(inode->i_fop);
-	if (unlikely(WARN_ON(!f->f_op))) {
+	f->f_op = fops_get(inode->i_fop);//这里找到的        //6.0
+	if (unlikely(WARN_ON(!f->f_op))) { 
+        //  其中inode->i_fop在mknod的init_special_inode调用中被赋值为def_chr_fops
 		error = -ENODEV;
 		goto cleanup_all;
 	}
@@ -765,10 +766,10 @@ static int do_dentry_open(struct file *f,
 
 	/* normally all 3 are set; ->open() can clear them if needed */
 	f->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;
-	if (!open)
+	if (!open)//open is null
 		open = f->f_op->open;
 	if (open) {
-		error = open(inode, f);
+		error = open(inode, f);//open   very  import  7.0
 		if (error)
 			goto cleanup_all;
 	}
@@ -877,7 +878,7 @@ EXPORT_SYMBOL(file_path);
 int vfs_open(const struct path *path, struct file *file)
 {
 	file->f_path = *path;
-	return do_dentry_open(file, d_backing_inode(path->dentry), NULL);
+	return do_dentry_open(file, d_backing_inode(path->dentry), NULL);//5.0
 }
 
 struct file *dentry_open(const struct path *path, int flags,
@@ -1066,7 +1067,8 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
     //5.如果创建file成功，则通过fd_install()将fd和file进行关联；
     //6.如果创建file失败，通过put_unused_fd()将已分配的fd返回至系统
     //                    并且根据file生成错误的fd；
-		struct file *f = do_filp_open(dfd, tmp, &op);
+		struct file *f = do_filp_open(dfd, tmp, &op);//+文件名字
+		//1.0
 		if (IS_ERR(f)) {
 			put_unused_fd(fd);
 			fd = PTR_ERR(f);
